@@ -13,6 +13,7 @@ export interface UserProfile {
   desiredWeight: number; // target weight in kg
   experienceLevel: 'iniciante' | 'intermediario' | 'avancado'; // gym tenure
   waterDrunk: number; // in ml
+  gender?: 'masculino' | 'feminino';
 }
 
 export interface GoogleUser {

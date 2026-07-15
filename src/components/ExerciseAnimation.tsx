@@ -19,6 +19,72 @@ interface JointInfo {
 export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
+  // Active palette theme state
+  const [activePalette, setActivePalette] = useState(() => {
+    return localStorage.getItem('personalpessoal_accent_palette') || 'laranja';
+  });
+
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setActivePalette(customEvent.detail);
+      }
+    };
+    window.addEventListener('personalpessoal_palette_changed', handleSync);
+    return () => window.removeEventListener('personalpessoal_palette_changed', handleSync);
+  }, []);
+
+  const getThemeColors = () => {
+    switch (activePalette) {
+      case 'azul':
+        return {
+          core: '#3b82f6',
+          coreRGB: '59, 130, 246',
+          highlight: '#60a5fa',
+          needle: '#3b82f6'
+        };
+      case 'verde':
+        return {
+          core: '#10b981',
+          coreRGB: '16, 185, 129',
+          highlight: '#34d399',
+          needle: '#10b981'
+        };
+      case 'roxo':
+        return {
+          core: '#8b5cf6',
+          coreRGB: '139, 92, 246',
+          highlight: '#a78bfa',
+          needle: '#8b5cf6'
+        };
+      case 'rosa':
+        return {
+          core: '#ec4899',
+          coreRGB: '236, 72, 153',
+          highlight: '#f472b6',
+          needle: '#ec4899'
+        };
+      case 'amarelo':
+        return {
+          core: '#eab308',
+          coreRGB: '234, 179, 8',
+          highlight: '#facc15',
+          needle: '#eab308'
+        };
+      case 'laranja':
+      default:
+        return {
+          core: '#f97316',
+          coreRGB: '249, 115, 22',
+          highlight: '#f59e0b',
+          needle: '#f97316'
+        };
+    }
+  };
+
+  const themeColors = getThemeColors();
+
   // Interactive camera rotation state
   const [yaw, setYaw] = useState<number>(0.4); // rotation around Y axis
   const [pitch, setPitch] = useState<number>(0.15); // rotation around X axis
@@ -1249,8 +1315,8 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
           const pulse = 0.8 + Math.sin(time * 0.008) * 0.2;
           grad.addColorStop(0, '#7f1d1d'); // dark crimson back
           grad.addColorStop(0.3, '#ef4444'); // hot active red
-          grad.addColorStop(0.5, '#f97316'); // glowing core orange
-          grad.addColorStop(0.8, '#f59e0b'); // light orange highlight
+          grad.addColorStop(0.5, themeColors.core); // glowing core active theme
+          grad.addColorStop(0.8, themeColors.highlight); // active theme highlight
           grad.addColorStop(1.0, '#7f1d1d');
         } else {
           // Standard modern biomechanical metal mannequin
@@ -1609,7 +1675,7 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         
         const focusGrad = ctx.createRadialGradient(proj.x, proj.y, 0, proj.x, proj.y, rad);
         focusGrad.addColorStop(0, `rgba(239, 68, 68, ${0.85 * intensity})`); // primary crimson red
-        focusGrad.addColorStop(0.4, `rgba(249, 115, 22, ${0.5 * intensity})`); // glowing orange core
+        focusGrad.addColorStop(0.4, `rgba(${themeColors.coreRGB}, ${0.5 * intensity})`); // glowing theme core
         focusGrad.addColorStop(1.0, 'rgba(239, 68, 68, 0)');
         
         ctx.beginPath();
@@ -1840,7 +1906,7 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
       ctx.beginPath();
       ctx.moveTo(compassX, compassY);
       ctx.lineTo(compassX + needleX, compassY - needleY);
-      ctx.strokeStyle = '#f97316'; // orange accent needle
+      ctx.strokeStyle = themeColors.needle; // active theme needle
       ctx.lineWidth = 1.5;
       ctx.stroke();
       
@@ -1890,8 +1956,8 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
           <RotateCcw size={10} />
           <span>Foco 3D</span>
         </button>
-        <span className="text-[7px] font-mono text-zinc-300 bg-orange-950/40 px-1.5 py-0.5 rounded border border-orange-500/15 flex items-center gap-1 shadow-sm uppercase">
-          <Sparkles size={8} className="text-orange-400" /> {type}
+        <span className="text-[7px] font-mono text-zinc-300 bg-zinc-900 border border-accent/15 flex items-center gap-1 shadow-sm uppercase">
+          <Sparkles size={8} className="text-accent" /> {type}
         </span>
       </div>
 

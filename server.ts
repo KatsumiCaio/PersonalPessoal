@@ -59,11 +59,8 @@ async function startServer() {
         { role: 'user' as const, parts: [{ text: message }] }
       ];
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents,
-        config: {
-          systemInstruction: `Você é o NutriAI, um assistente virtual especialista em nutrição esportiva e alimentação de baixo custo.
+      let response;
+      const systemInstruction = `Você é o NutriAI, um assistente virtual especialista em nutrição esportiva e alimentação de baixo custo.
 Seu objetivo é ajudar praticantes de musculação e atletas amadores a otimizarem sua dieta gastando pouco.
 Você deve responder dúvidas sobre:
 1. Substituição de alimentos caros por equivalentes saudáveis e baratos (ex: peito de frango por ovos inteiros ou proteína de soja PTS; patinho moído por sardinha; batata doce por mandioca; arroz integral por arroz branco enriquecido com casca de abóbora). Referencie o banco de dados de substitutos econômicos do aplicativo sempre que aplicável.
@@ -75,15 +72,57 @@ Instruções importantes:
 - Mantenha suas respostas práticas, diretas, encorajadoras e baseadas em evidências científicas simples.
 - Dê dicas financeiras práticas (como comprar a granel, em feiras livres, mercados atacadistas, preparar em casa).
 - Escreva de forma estilizada e empática, em Português do Brasil.
-- Use markdown (negritos, listas e tabelas) para deixar as informações fáceis de ler no visor pequeno de um smartphone simulado.`
+- Use markdown (negritos, listas e tabelas) para deixar as informações fáceis de ler no visor pequeno de um smartphone simulado.`;
+
+      const modelsToTry = [
+        "gemini-3.5-flash",
+        "gemini-flash-latest",
+        "gemini-3.1-flash-lite"
+      ];
+
+      let lastError: any = null;
+
+      for (const model of modelsToTry) {
+        try {
+          console.log(`Tentando obter resposta do Gemini usando o modelo: ${model}`);
+          response = await ai.models.generateContent({
+            model,
+            contents,
+            config: { systemInstruction }
+          });
+          if (response && response.text) {
+            console.log(`Sucesso com o modelo: ${model}`);
+            break;
+          }
+        } catch (err: any) {
+          console.warn(`Falha com o modelo ${model}:`, err.message || err);
+          lastError = err;
         }
-      });
+      }
+
+      if (!response) {
+        throw lastError || new Error("Todos os modelos do Gemini falharam ou estão indisponíveis.");
+      }
 
       const text = response.text;
       res.json({ text });
     } catch (error: any) {
       console.error("Erro no chat de nutrição:", error);
-      res.status(500).json({ error: error.message || "Erro desconhecido ao processar resposta do assistente." });
+      
+      let userFriendlyMessage = "Ocorreu um erro ao processar a resposta do assistente.";
+      const errorStr = typeof error === 'object' ? JSON.stringify(error) : String(error);
+
+      if (errorStr.includes("503") || errorStr.includes("UNAVAILABLE") || errorStr.includes("high demand") || errorStr.includes("temporarily overloaded")) {
+        userFriendlyMessage = "Os servidores da inteligência artificial estão extremamente sobrecarregados devido à alta demanda global. Por favor, aguarde alguns segundos e tente enviar novamente.";
+      } else if (errorStr.includes("429") || errorStr.includes("RESOURCE_EXHAUSTED") || errorStr.includes("quota")) {
+        userFriendlyMessage = "A cota de uso temporária da API foi atingida. Por favor, aguarde um instante e tente novamente.";
+      } else if (errorStr.includes("403") || errorStr.includes("API_KEY_INVALID")) {
+        userFriendlyMessage = "A chave de API configurada é inválida ou não possui as permissões necessárias. Verifique a chave configurada no AI Studio.";
+      } else if (error.message) {
+        userFriendlyMessage = error.message;
+      }
+
+      res.status(500).json({ error: userFriendlyMessage });
     }
   });
 

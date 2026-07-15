@@ -4,7 +4,8 @@ import { UserProfile, Exercise, DayWorkout, FoodReplacement, GoogleUser } from '
 import { getWorkoutForUser, getAlternativesForExercise } from '../data/workoutData';
 import { foodReplacements } from '../data/nutritionData';
 import { ExerciseAnimation } from './ExerciseAnimation';
-import { Dumbbell, Utensils, User, Flame, Award, MapPin, Calendar, Compass, RefreshCw, Droplet, Plus, Coffee, AlertTriangle, Play, Pause, RotateCcw, Search, ChevronRight, Check, ChevronLeft, Scale, Clock, Heart, Activity, ChevronDown, Sparkles, Shuffle, Sliders, Send, Bot, Trash2 } from 'lucide-react';
+import { Dumbbell, Utensils, User, Flame, Award, MapPin, Calendar, Compass, RefreshCw, Droplet, Plus, Coffee, AlertTriangle, Play, Pause, RotateCcw, Search, ChevronRight, Check, ChevronLeft, Scale, Clock, Heart, Activity, ChevronDown, Sparkles, Shuffle, Sliders, Send, Bot, Trash2, Sun, Moon } from 'lucide-react';
+import { PALETTE_COLORS } from '../App';
 
 // Constantes de Opções para o Questionário Expandido
 const EQUIPMENT_OPTIONS = [
@@ -37,6 +38,47 @@ const tabVariants = {
 };
 
 export default function MobileSimulator() {
+  const [activePalette, setActivePalette] = useState(() => {
+    const saved = localStorage.getItem('personalpessoal_accent_palette');
+    return saved || 'laranja';
+  });
+
+  const handlePaletteChange = (paletteId: string) => {
+    setActivePalette(paletteId);
+    localStorage.setItem('personalpessoal_accent_palette', paletteId);
+    window.dispatchEvent(new CustomEvent('personalpessoal_palette_changed', { detail: paletteId }));
+  };
+
+  useEffect(() => {
+    const syncTheme = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail !== activePalette) {
+        setActivePalette(customEvent.detail);
+      }
+    };
+    window.addEventListener('personalpessoal_palette_changed', syncTheme);
+    return () => window.removeEventListener('personalpessoal_palette_changed', syncTheme);
+  }, [activePalette]);
+
+  useEffect(() => {
+    const palette = PALETTE_COLORS[activePalette] || PALETTE_COLORS.laranja;
+    const root = document.documentElement;
+    root.style.setProperty('--accent', palette.accent);
+    root.style.setProperty('--accent-hover', palette.hover);
+    root.style.setProperty('--accent-glow', palette.glow);
+  }, [activePalette]);
+
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('personalpessoal_dark_mode');
+    return saved !== 'false'; // Padrão é true (escuro)
+  });
+
+  const toggleDarkMode = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    localStorage.setItem('personalpessoal_dark_mode', String(nextDark));
+  };
+
   // Mobile UI States
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(() => {
     const saved = localStorage.getItem('gymdemocra_google_user');
@@ -80,6 +122,7 @@ export default function MobileSimulator() {
       setWorkoutDurationCategory(profile.workoutDurationCategory || 'moderado');
       setAllowedMachines(profile.allowedMachines || ['leg_press', 'polias', 'pesos_livres', 'maquinas']);
       setHealthLimitations(profile.healthLimitations || ['nenhuma']);
+      setGender(profile.gender || 'masculino');
     }
   }, [profile]);
 
@@ -95,6 +138,7 @@ export default function MobileSimulator() {
   const [workoutDurationCategory, setWorkoutDurationCategory] = useState<'rapido' | 'moderado' | 'completo'>('moderado');
   const [allowedMachines, setAllowedMachines] = useState<string[]>(['leg_press', 'polias', 'pesos_livres', 'maquinas']);
   const [healthLimitations, setHealthLimitations] = useState<string[]>(['nenhuma']);
+  const [gender, setGender] = useState<'masculino' | 'feminino'>('masculino');
 
   // Active App States
   const [activeTab, setActiveTab] = useState<'treino' | 'alimentacao' | 'perfil'>('treino');
@@ -108,11 +152,51 @@ export default function MobileSimulator() {
   const [editSeries, setEditSeries] = useState<string>('');
   const [editRest, setEditRest] = useState<number>(60);
 
+  // Simulated day tracking to restrict access and editing based on chronological constraints
+  const [simulatedDay, setSimulatedDay] = useState<string>(() => {
+    const weekdays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+    return weekdays[new Date().getDay()];
+  });
+
+  const WEEKDAY_ORDER: Record<string, number> = {
+    'Segunda-feira': 1,
+    'Terça-feira': 2,
+    'Quarta-feira': 3,
+    'Quinta-feira': 4,
+    'Sexta-feira': 5,
+    'Sábado': 6,
+    'Domingo': 7
+  };
+
+  const getDayStatus = (dayName: string) => {
+    const cleanDayName = dayName.split(' - ')[0].trim();
+    const targetOrder = WEEKDAY_ORDER[cleanDayName];
+    const currentOrder = WEEKDAY_ORDER[simulatedDay];
+    
+    if (!targetOrder || !currentOrder) return 'hoje';
+    if (targetOrder < currentOrder) return 'passado';
+    if (targetOrder > currentOrder) return 'futuro';
+    return 'hoje';
+  };
+
+  // Auto-select the workout corresponding to the simulated today
+  useEffect(() => {
+    if (userWorkouts.length > 0) {
+      const todayIdx = userWorkouts.findIndex(w => {
+        const cleanName = w.dayName.split(' - ')[0].trim();
+        return cleanName === simulatedDay;
+      });
+      if (todayIdx !== -1) {
+        setSelectedDayIdx(todayIdx);
+      }
+    }
+  }, [simulatedDay, userWorkouts]);
+
   // Synchronize custom workouts based on profile configuration or load custom edits from localStorage
   useEffect(() => {
     if (profile) {
-      const currentProfileKey = `${profile.objective}_${profile.location}_${profile.daysPerWeek}`;
-      const savedDataStr = localStorage.getItem('gymdemocra_custom_workouts_v2');
+      const currentProfileKey = `${profile.objective}_${profile.location}_${profile.daysPerWeek}_${profile.workoutDurationCategory || 'moderado'}_${profile.experienceLevel || 'intermediario'}`;
+      const savedDataStr = localStorage.getItem('personalpessoal_custom_workouts_v3');
       if (savedDataStr) {
         try {
           const savedData = JSON.parse(savedDataStr);
@@ -125,16 +209,28 @@ export default function MobileSimulator() {
         }
       }
       // Generate if not present or key mismatched
-      const generated = getWorkoutForUser(profile.objective, profile.location, profile.daysPerWeek);
+      const generated = getWorkoutForUser(
+        profile.objective, 
+        profile.location, 
+        profile.daysPerWeek,
+        profile.workoutDurationCategory || 'moderado',
+        profile.experienceLevel || 'intermediario'
+      );
       setUserWorkouts(generated);
-      localStorage.setItem('gymdemocra_custom_workouts_v2', JSON.stringify({
+      localStorage.setItem('personalpessoal_custom_workouts_v3', JSON.stringify({
         profileKey: currentProfileKey,
         workouts: generated
       }));
     } else {
       setUserWorkouts([]);
     }
-  }, [profile?.objective, profile?.location, profile?.daysPerWeek]);
+  }, [
+    profile?.objective, 
+    profile?.location, 
+    profile?.daysPerWeek, 
+    profile?.workoutDurationCategory, 
+    profile?.experienceLevel
+  ]);
 
   // Water log states
   const [waterDrunk, setWaterDrunk] = useState<number>(() => {
@@ -372,7 +468,8 @@ export default function MobileSimulator() {
       workoutDurationCategory,
       allowedMachines,
       healthLimitations,
-      waterDrunk: 0
+      waterDrunk: 0,
+      gender
     };
     setProfile(newProfile);
     localStorage.setItem('gymdemocra_profile', JSON.stringify(newProfile));
@@ -442,11 +539,20 @@ export default function MobileSimulator() {
   };
 
   const toggleExerciseCheck = (id: string) => {
+    if (activeWorkout) {
+      const status = getDayStatus(activeWorkout.dayName);
+      if (status !== 'hoje') return;
+    }
     setCheckedExercises(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const handleReplaceWithRandomAlternative = (dayIdx: number, exerciseId: string) => {
     if (!profile) return;
+    const targetWorkout = userWorkouts[dayIdx];
+    if (targetWorkout) {
+      const status = getDayStatus(targetWorkout.dayName);
+      if (status !== 'hoje') return;
+    }
     const currentProfileKey = `${profile.objective}_${profile.location}_${profile.daysPerWeek}`;
     
     setUserWorkouts(prevWorkouts => {
@@ -476,6 +582,11 @@ export default function MobileSimulator() {
 
   const handleManualSubstituteExercise = (dayIdx: number, exerciseId: string, substitute: Exercise) => {
     if (!profile) return;
+    const targetWorkout = userWorkouts[dayIdx];
+    if (targetWorkout) {
+      const status = getDayStatus(targetWorkout.dayName);
+      if (status !== 'hoje') return;
+    }
     const currentProfileKey = `${profile.objective}_${profile.location}_${profile.daysPerWeek}`;
     
     setUserWorkouts(prevWorkouts => {
@@ -499,6 +610,10 @@ export default function MobileSimulator() {
   };
 
   const handleStartEdit = (ex: Exercise) => {
+    if (activeWorkout) {
+      const status = getDayStatus(activeWorkout.dayName);
+      if (status !== 'hoje') return; // Do not edit if not today
+    }
     setEditingExerciseId(ex.id);
     setEditName(ex.name);
     setEditSeries(ex.series);
@@ -507,6 +622,11 @@ export default function MobileSimulator() {
 
   const handleSaveEdit = (dayIdx: number, exerciseId: string) => {
     if (!profile) return;
+    const targetWorkout = userWorkouts[dayIdx];
+    if (targetWorkout) {
+      const status = getDayStatus(targetWorkout.dayName);
+      if (status !== 'hoje') return;
+    }
     const currentProfileKey = `${profile.objective}_${profile.location}_${profile.daysPerWeek}`;
     
     setUserWorkouts(prevWorkouts => {
@@ -561,21 +681,21 @@ export default function MobileSimulator() {
         </div>
 
         {/* Smartphone Screen Canvas */}
-        <div className="flex-1 bg-zinc-900 rounded-[38px] overflow-hidden flex flex-col relative pt-5 pb-2 text-white">
+        <div className={`flex-1 ${isDark ? 'bg-zinc-900 text-white' : 'bg-zinc-50 text-zinc-900'} rounded-[38px] overflow-hidden flex flex-col relative pt-5 pb-2 transition-colors duration-200`}>
           {/* Mock Status Bar */}
-          <div className="px-5 py-1.5 flex justify-between items-center text-[11px] font-medium font-sans text-zinc-400 z-10 bg-zinc-950/20">
+          <div className={`px-5 py-1.5 flex justify-between items-center text-[11px] font-medium font-sans ${isDark ? 'text-zinc-400 bg-zinc-950/20' : 'text-zinc-600 bg-zinc-200/40'} z-10 transition-colors`}>
             <span>09:41</span>
             <div className="flex items-center gap-1">
               <span className="text-[10px] bg-orange-600/30 text-orange-400 px-1.5 py-0.5 rounded font-bold font-mono">5G</span>
               <Droplet size={10} className="text-orange-500 fill-orange-500" />
-              <div className="w-5 h-2.5 border border-zinc-500 rounded-sm p-0.5 flex items-center">
-                <div className="h-full w-4 bg-zinc-300 rounded-2xs"></div>
+              <div className={`w-5 h-2.5 border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-sm p-0.5 flex items-center`}>
+                <div className={`h-full w-4 ${isDark ? 'bg-zinc-300' : 'bg-zinc-700'} rounded-2xs`}></div>
               </div>
             </div>
           </div>
 
           {/* Core Simulator Screen Content */}
-          <div className="flex-1 overflow-y-auto px-4 py-2 flex flex-col scrollbar-thin scrollbar-thumb-zinc-800">
+          <div className={`flex-1 overflow-y-auto px-4 py-2 flex flex-col ${isDark ? 'scrollbar-thin scrollbar-thumb-zinc-800' : 'scrollbar-thin scrollbar-thumb-zinc-300'}`}>
             <AnimatePresence mode="wait">
               {!googleUser ? (
                 /* ================= GOOGLE LOGIN FLOW ================= */
@@ -976,6 +1096,35 @@ export default function MobileSimulator() {
                           </label>
                           
                           <div className="space-y-3.5 bg-zinc-950/70 p-3 rounded-2xl border border-zinc-850">
+                            {/* Sexo Biológico */}
+                            <div className="pb-1.5 border-b border-zinc-900/60">
+                              <span className="text-[9px] font-bold text-zinc-400 font-mono block mb-1.5 uppercase">Sexo Biológico</span>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setGender('masculino')}
+                                  className={`py-1.5 px-2 rounded-xl border text-[10px] font-bold font-sans flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                                    gender === 'masculino'
+                                      ? 'bg-orange-500/15 border-orange-500 text-orange-400'
+                                      : 'bg-zinc-900 border-zinc-800 text-zinc-450 hover:text-white'
+                                  }`}
+                                >
+                                  👨 Masculino
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setGender('feminino')}
+                                  className={`py-1.5 px-2 rounded-xl border text-[10px] font-bold font-sans flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                                    gender === 'feminino'
+                                      ? 'bg-orange-500/15 border-orange-500 text-orange-400'
+                                      : 'bg-zinc-900 border-zinc-800 text-zinc-450 hover:text-white'
+                                  }`}
+                                >
+                                  👩 Feminino
+                                </button>
+                              </div>
+                            </div>
+
                             {/* Altura */}
                             <div>
                               <div className="flex justify-between text-[10px] font-mono leading-none mb-1">
@@ -1158,24 +1307,61 @@ export default function MobileSimulator() {
                       </div>
                     </div>
 
+                    {/* Simulated Today Selector Widget */}
+                    <div className="bg-zinc-950/90 border border-zinc-850 rounded-xl p-2.5 flex items-center justify-between gap-2.5 shadow-inner">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                          <Clock size={10} className="text-zinc-500" /> Simulando Hoje:
+                        </span>
+                      </div>
+                      <select
+                        value={simulatedDay}
+                        onChange={(e) => setSimulatedDay(e.target.value)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-bold font-sans text-orange-400 px-2.5 py-1 cursor-pointer focus:outline-none"
+                      >
+                        <option value="Segunda-feira">📅 Segunda-feira</option>
+                        <option value="Terça-feira">📅 Terça-feira</option>
+                        <option value="Quarta-feira">📅 Quarta-feira</option>
+                        <option value="Quinta-feira">📅 Quinta-feira</option>
+                        <option value="Sexta-feira">📅 Sexta-feira</option>
+                        <option value="Sábado">📅 Sábado</option>
+                        <option value="Domingo">📅 Domingo</option>
+                      </select>
+                    </div>
+
                     {/* Day selector tabs */}
                     <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
-                      {userWorkouts.map((workout, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            setSelectedDayIdx(idx);
-                            setTimerActive(false);
-                          }}
-                          className={`py-1.5 px-3 rounded-lg text-xs font-bold font-sans whitespace-nowrap transition-all ${
-                            selectedDayIdx === idx
-                              ? 'bg-orange-600 text-white'
-                              : 'bg-zinc-800/60 text-zinc-400 hover:bg-zinc-850'
-                          }`}
-                        >
-                          {workout.dayName.split('-')[0]}
-                        </button>
-                      ))}
+                      {userWorkouts.map((workout, idx) => {
+                        const cleanDayName = workout.dayName.split('-')[0].trim();
+                        const status = getDayStatus(workout.dayName);
+                        
+                        let statusEmoji = '';
+                        if (status === 'passado') statusEmoji = ' ✅';
+                        else if (status === 'hoje') statusEmoji = ' 🔥';
+                        else if (status === 'futuro') statusEmoji = ' ⏳';
+
+                        const isSelected = selectedDayIdx === idx;
+
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setSelectedDayIdx(idx);
+                              setTimerActive(false);
+                            }}
+                            className={`py-1.5 px-3 rounded-lg text-xs font-bold font-sans whitespace-nowrap transition-all flex items-center gap-1 ${
+                              isSelected
+                                ? 'bg-orange-600 text-white'
+                                : status === 'passado'
+                                ? 'bg-zinc-900/60 border border-zinc-850 text-emerald-500 hover:bg-zinc-850'
+                                : 'bg-zinc-800/60 text-zinc-400 hover:bg-zinc-850'
+                            }`}
+                          >
+                            {cleanDayName}{statusEmoji}
+                          </button>
+                        );
+                      })}
                     </div>
 
                     {/* Rest Countdown Timer Card */}
@@ -1185,7 +1371,7 @@ export default function MobileSimulator() {
                           Cronômetro de Descanso
                         </span>
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-2xl font-black font-mono tracking-widest text-orange-500">
+                          <span className="text-2xl font-black font-mono tracking-widest text-accent transition-colors duration-500">
                             {timerSeconds}s
                           </span>
                           <span className="text-[9px] font-mono text-zinc-500">/ {timerMax}s</span>
@@ -1229,6 +1415,54 @@ export default function MobileSimulator() {
                     {activeWorkout ? (
                       <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[300px] pr-0.5">
                         
+                        {/* Day Status Banner */}
+                        {(() => {
+                          const status = getDayStatus(activeWorkout.dayName);
+                          if (status === 'passado') {
+                            return (
+                              <div className="bg-emerald-950/20 border border-emerald-900/30 p-2.5 rounded-xl flex items-center gap-2">
+                                <Check size={14} className="text-emerald-400 shrink-0" />
+                                <div>
+                                  <span className="text-[9px] font-extrabold uppercase text-emerald-400 tracking-wide block">
+                                    Histórico Concluído (Bloqueado)
+                                  </span>
+                                  <span className="text-[8px] text-zinc-400 font-sans block mt-0.5">
+                                    Este treino já passou. Os dados de progresso estão salvos e não podem ser alterados.
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          } else if (status === 'futuro') {
+                            return (
+                              <div className="bg-zinc-900/40 border border-zinc-800/80 p-2.5 rounded-xl flex items-center gap-2">
+                                <Clock size={14} className="text-orange-400 shrink-0" />
+                                <div>
+                                  <span className="text-[9px] font-extrabold uppercase text-orange-400 tracking-wide block">
+                                    Treino Agendado (Bloqueado)
+                                  </span>
+                                  <span className="text-[8px] text-zinc-400 font-sans block mt-0.5">
+                                    Aguardando a {activeWorkout.dayName.split(' - ')[0]}. Não é permitido iniciar este treino antecipadamente.
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div className="bg-orange-950/20 border border-orange-900/30 p-2.5 rounded-xl flex items-center gap-2">
+                                <Activity size={14} className="text-orange-500 shrink-0 animate-pulse" />
+                                <div>
+                                  <span className="text-[9px] font-extrabold uppercase text-orange-400 tracking-wide block">
+                                    Treino de Hoje (Liberado)
+                                  </span>
+                                  <span className="text-[8px] text-zinc-350 font-sans block mt-0.5">
+                                    Seu treino do dia está ativo! Complete as séries e registre seu progresso.
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }
+                        })()}
+
                         {/* Health Limitation Warning Banner */}
                         {profile.healthLimitations && profile.healthLimitations.length > 0 && !profile.healthLimitations.includes('nenhuma') && (
                           <div className="bg-red-950/30 border border-red-900/40 p-2.5 rounded-xl space-y-1 animate-pulse">
@@ -1274,7 +1508,8 @@ export default function MobileSimulator() {
                         </h3>
 
                         {activeWorkout.exercises.map((ex, idx) => {
-                          const isChecked = checkedExercises[ex.id];
+                          const dayStatus = getDayStatus(activeWorkout.dayName);
+                          const isChecked = dayStatus === 'passado' ? true : checkedExercises[ex.id];
                           const isExpanded = expandedExerciseId === ex.id;
                           const isEditing = editingExerciseId === ex.id;
 
@@ -1282,17 +1517,17 @@ export default function MobileSimulator() {
                             return (
                               <div
                                 key={ex.id}
-                                className="p-3 bg-zinc-900 border border-orange-500/40 rounded-2xl space-y-3 animate-in fade-in duration-150"
+                                className="p-3 bg-zinc-900 border border-accent/40 rounded-2xl space-y-3 animate-in fade-in duration-150"
                               >
                                 <div className="space-y-1">
-                                  <span className="text-[8px] font-bold text-orange-400 uppercase tracking-wider block font-sans">
+                                  <span className="text-[8px] font-bold text-accent uppercase tracking-wider block font-sans">
                                     Editar Exercício
                                   </span>
                                   <input
                                     type="text"
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
-                                    className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2.5 py-1.5 rounded-lg text-white font-sans focus:outline-none focus:border-orange-500"
+                                    className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2.5 py-1.5 rounded-lg text-white font-sans focus:outline-none focus:border-accent"
                                     placeholder="Nome do exercício"
                                   />
                                 </div>
@@ -1306,7 +1541,7 @@ export default function MobileSimulator() {
                                       type="text"
                                       value={editSeries}
                                       onChange={(e) => setEditSeries(e.target.value)}
-                                      className="w-full bg-zinc-950 border border-zinc-800 text-[11px] px-2.5 py-1 rounded-lg text-white font-mono focus:outline-none focus:border-orange-500"
+                                      className="w-full bg-zinc-950 border border-zinc-800 text-[11px] px-2.5 py-1 rounded-lg text-white font-mono focus:outline-none focus:border-accent"
                                       placeholder="Ex: 4 x 10"
                                     />
                                   </div>
@@ -1318,7 +1553,7 @@ export default function MobileSimulator() {
                                       type="number"
                                       value={editRest}
                                       onChange={(e) => setEditRest(parseInt(e.target.value, 10) || 0)}
-                                      className="w-full bg-zinc-950 border border-zinc-800 text-[11px] px-2.5 py-1 rounded-lg text-white font-mono focus:outline-none focus:border-orange-500"
+                                      className="w-full bg-zinc-950 border border-zinc-800 text-[11px] px-2.5 py-1 rounded-lg text-white font-mono focus:outline-none focus:border-accent"
                                       placeholder="Ex: 60"
                                     />
                                   </div>
@@ -1327,7 +1562,7 @@ export default function MobileSimulator() {
                                 <div className="flex gap-2 pt-1">
                                   <button
                                     onClick={() => handleSaveEdit(selectedDayIdx, ex.id)}
-                                    className="flex-1 py-1.5 bg-orange-600 hover:bg-orange-500 text-white text-[10px] font-bold rounded-lg transition-all active:scale-95 cursor-pointer font-sans"
+                                    className="flex-1 py-1.5 bg-accent hover:bg-accent-hover text-white text-[10px] font-bold rounded-lg transition-all active:scale-95 cursor-pointer font-sans"
                                   >
                                     Salvar
                                   </button>
@@ -1361,7 +1596,7 @@ export default function MobileSimulator() {
                                     <h4 className={`text-xs font-bold truncate ${isChecked ? 'line-through text-zinc-500' : 'text-white'}`}>
                                       {idx + 1}. {ex.name}
                                     </h4>
-                                    <span className="flex-shrink-0 text-[8px] bg-orange-500/10 text-orange-400 font-mono font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-orange-500/15">
+                                    <span className="flex-shrink-0 text-[8px] bg-accent/10 text-accent font-mono font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-accent/15">
                                       <Sparkles size={8} /> DEMO
                                     </span>
                                   </div>
@@ -1372,20 +1607,31 @@ export default function MobileSimulator() {
                                 <div className="flex items-center gap-2">
                                   <ChevronDown 
                                     size={14} 
-                                    className={`text-zinc-500 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-orange-400' : ''}`} 
+                                    className={`text-zinc-500 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-accent' : ''}`} 
                                   />
                                   <button
+                                    disabled={dayStatus !== 'hoje'}
                                     onClick={(e) => {
                                       e.stopPropagation(); // Don't trigger expand
                                       toggleExerciseCheck(ex.id);
                                     }}
                                     className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
                                       isChecked
-                                        ? 'bg-green-600 border-green-500 text-zinc-950'
-                                        : 'border-zinc-700 hover:border-zinc-500'
+                                        ? dayStatus === 'passado'
+                                          ? 'bg-zinc-800/80 border-zinc-700 text-zinc-400 cursor-not-allowed'
+                                          : 'bg-green-600 border-green-500 text-zinc-950 cursor-pointer'
+                                        : dayStatus === 'futuro'
+                                        ? 'border-zinc-800 bg-zinc-950/20 text-zinc-700 cursor-not-allowed'
+                                        : 'border-zinc-700 hover:border-zinc-500 cursor-pointer'
                                     }`}
                                   >
-                                    {isChecked && <Check size={12} strokeWidth={3} className="text-white" />}
+                                    {isChecked && (
+                                      dayStatus === 'passado' ? (
+                                        <Check size={12} strokeWidth={3} className="text-emerald-500" />
+                                      ) : (
+                                        <Check size={12} strokeWidth={3} className="text-white" />
+                                      )
+                                    )}
                                   </button>
                                 </div>
                               </div>
@@ -1405,39 +1651,50 @@ export default function MobileSimulator() {
                                 )}
 
                                 {/* Action buttons: Start Rest & Substitute */}
-                                <div className="pt-2 border-t border-zinc-800/80 flex flex-col gap-2">
-                                  {ex.tips && (
-                                    <p className="text-[8.5px] font-mono text-orange-400/80 italic leading-snug" title={ex.tips}>
-                                      Dica: {ex.tips}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-1">
+                                {dayStatus === 'hoje' ? (
+                                  <div className="pt-2 border-t border-zinc-800/80 flex flex-col gap-2">
+                                    {ex.tips && (
+                                      <p className="text-[8.5px] font-mono text-accent/80 italic leading-snug" title={ex.tips}>
+                                        Dica: {ex.tips}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={() => setSubstitutingExerciseId(substitutingExerciseId === ex.id ? null : ex.id)}
+                                          className={`text-[9px] font-bold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
+                                            substitutingExerciseId === ex.id
+                                              ? 'bg-accent/15 border-accent/30 text-accent'
+                                              : 'bg-zinc-800 hover:bg-zinc-750 border-zinc-700 text-zinc-300'
+                                          }`}
+                                        >
+                                          <Shuffle size={9} /> Substituir
+                                        </button>
+                                        <button
+                                          onClick={() => handleStartEdit(ex)}
+                                          className="text-[9px] font-bold px-2 py-1 bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-zinc-300 rounded-lg flex items-center gap-1 transition-all"
+                                        >
+                                          <Sliders size={9} /> Editar
+                                        </button>
+                                      </div>
                                       <button
-                                        onClick={() => setSubstitutingExerciseId(substitutingExerciseId === ex.id ? null : ex.id)}
-                                        className={`text-[9px] font-bold px-2 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                                          substitutingExerciseId === ex.id
-                                            ? 'bg-orange-600/15 border-orange-500/30 text-orange-400'
-                                            : 'bg-zinc-800 hover:bg-zinc-750 border-zinc-700 text-zinc-300'
-                                        }`}
+                                        onClick={() => startTimer(ex.rest)}
+                                        className="text-[9px] font-bold text-white bg-zinc-850 hover:bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-700 flex items-center gap-1 transition-colors"
                                       >
-                                        <Shuffle size={9} /> Substituir
-                                      </button>
-                                      <button
-                                        onClick={() => handleStartEdit(ex)}
-                                        className="text-[9px] font-bold px-2 py-1 bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-zinc-300 rounded-lg flex items-center gap-1 transition-all"
-                                      >
-                                        <Sliders size={9} /> Editar
+                                        <Play size={8} fill="currentColor" /> Descanso {ex.rest}s
                                       </button>
                                     </div>
-                                    <button
-                                      onClick={() => startTimer(ex.rest)}
-                                      className="text-[9px] font-bold text-white bg-zinc-850 hover:bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-700 flex items-center gap-1 transition-colors"
-                                    >
-                                      <Play size={8} fill="currentColor" /> Descanso {ex.rest}s
-                                    </button>
                                   </div>
-                                </div>
+                                ) : (
+                                  <div className="pt-2 border-t border-zinc-850 flex items-center justify-between text-[8px] text-zinc-500 font-mono">
+                                    <span className="flex items-center gap-1">
+                                      <span>🔒</span> Módulo de Leitura
+                                    </span>
+                                    <span className="uppercase tracking-wider font-bold text-[7.5px] text-zinc-500 bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-850">
+                                      {dayStatus === 'passado' ? 'Realizado' : 'Bloqueado'}
+                                    </span>
+                                  </div>
+                                )}
 
                                 {/* Substitution Options Panel */}
                                 {substitutingExerciseId === ex.id && (
@@ -1446,7 +1703,7 @@ export default function MobileSimulator() {
                                       <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wide">
                                         Opções de Substituição
                                       </span>
-                                      <span className="text-[8px] bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded font-mono px-1 py-0.5 font-bold">
+                                      <span className="text-[8px] bg-accent/10 text-accent border border-accent/20 rounded font-mono px-1 py-0.5 font-bold">
                                         {ex.animationType.toUpperCase()}
                                       </span>
                                     </div>
@@ -1457,7 +1714,7 @@ export default function MobileSimulator() {
                                         handleReplaceWithRandomAlternative(selectedDayIdx, ex.id);
                                         setSubstitutingExerciseId(null);
                                       }}
-                                      className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-orange-600/10 hover:bg-orange-600/20 border border-orange-500/20 text-orange-400 text-[9.5px] font-bold rounded-lg transition-all"
+                                      className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-accent/10 hover:bg-accent/20 border border-accent/20 text-accent text-[9.5px] font-bold rounded-lg transition-all"
                                     >
                                       <Shuffle size={10} />
                                       Gerar Alternativa Aleatória
@@ -1477,13 +1734,13 @@ export default function MobileSimulator() {
                                                 handleManualSubstituteExercise(selectedDayIdx, ex.id, alt);
                                                 setSubstitutingExerciseId(null);
                                               }}
-                                              className="p-1.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-orange-500/30 rounded-lg flex justify-between items-center cursor-pointer transition-all"
+                                              className="p-1.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-accent/30 rounded-lg flex justify-between items-center cursor-pointer transition-all"
                                             >
                                               <div className="flex-1 min-w-0 pr-1.5">
                                                 <span className="text-[9.5px] font-bold text-white block truncate">{alt.name}</span>
                                                 <span className="text-[8px] font-mono text-zinc-400 block mt-0.5">{alt.series}</span>
                                               </div>
-                                              <button className="text-[8px] font-bold text-orange-400 bg-orange-500/5 px-1.5 py-0.5 rounded border border-orange-500/10 hover:bg-orange-600 hover:text-white hover:border-orange-500 transition-all">
+                                              <button className="text-[8px] font-bold text-accent bg-accent/5 px-1.5 py-0.5 rounded border border-accent/10 hover:bg-accent hover:text-white hover:border-accent transition-all">
                                                 Substituir
                                               </button>
                                             </div>
@@ -1558,9 +1815,9 @@ export default function MobileSimulator() {
                       {/* Protein Tracker */}
                       <div className="bg-zinc-950 p-3 rounded-2xl border border-zinc-800/80 flex flex-col justify-between">
                         <div className="space-y-0.5">
-                          <span className="text-[9px] font-bold text-orange-400 uppercase font-sans tracking-wide">Alvo de Proteínas</span>
+                          <span className="text-[9px] font-bold text-accent uppercase font-sans tracking-wide">Alvo de Proteínas</span>
                           <div className="flex items-baseline gap-1">
-                            <span className="text-lg font-black font-mono text-orange-500">{proteinTarget}g</span>
+                            <span className="text-lg font-black font-mono text-accent">{proteinTarget}g</span>
                             <span className="text-[9px] text-zinc-500">recom. diária</span>
                           </div>
                         </div>
@@ -1587,16 +1844,16 @@ export default function MobileSimulator() {
                         onClick={() => setAlimentacaoSubTab('chat')}
                         className={`flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all relative ${
                           alimentacaoSubTab === 'chat'
-                            ? 'bg-orange-600 text-white font-black'
-                            : 'text-zinc-400 hover:text-orange-400'
+                            ? 'bg-accent text-white font-black'
+                            : 'text-zinc-400 hover:text-accent'
                         }`}
                       >
                         <Sparkles size={11} className={alimentacaoSubTab === 'chat' ? 'animate-pulse text-yellow-300' : 'text-zinc-500'} />
                         Perguntar ao NutriAI
                         {alimentacaoSubTab !== 'chat' && (
                           <span className="absolute top-1 right-1.5 flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent"></span>
                           </span>
                         )}
                       </button>
@@ -1624,7 +1881,7 @@ export default function MobileSimulator() {
                               placeholder="Buscar alimento (ex: frango, ovos)..."
                               value={searchFood}
                               onChange={e => setSearchFood(e.target.value)}
-                              className="w-full bg-zinc-950 border border-zinc-800/80 text-xs rounded-xl px-2.5 py-1.5 pl-7 text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500"
+                              className="w-full bg-zinc-950 border border-zinc-800/80 text-xs rounded-xl px-2.5 py-1.5 pl-7 text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-accent"
                             />
                             <Search className="absolute left-2.5 top-2 text-zinc-600" size={12} />
                           </div>
@@ -1637,7 +1894,7 @@ export default function MobileSimulator() {
                                 onClick={() => setSelectedReplacementCategory(cat)}
                                 className={`py-1 px-2.5 rounded-lg text-[9px] font-semibold uppercase font-mono transition-colors ${
                                   selectedReplacementCategory === cat
-                                    ? 'bg-orange-600 text-white'
+                                    ? 'bg-accent text-white'
                                     : 'bg-zinc-950 text-zinc-500 hover:text-zinc-300'
                                 }`}
                               >
@@ -1675,7 +1932,7 @@ export default function MobileSimulator() {
 
                                 {/* Conversion Tip */}
                                 <div className="text-[9px] text-zinc-400 leading-normal font-sans">
-                                  <span className="text-orange-500 font-bold">Proporção:</span> {food.ratio}
+                                  <span className="text-accent font-bold">Proporção:</span> {food.ratio}
                                 </div>
 
                                 {/* Saving Architect recommendation */}
@@ -1695,7 +1952,7 @@ export default function MobileSimulator() {
                         {/* Chat Header */}
                         <div className="bg-zinc-900/50 px-3 py-1.5 border-b border-zinc-850 flex items-center justify-between shrink-0">
                           <div className="flex items-center gap-1.5">
-                            <div className="w-5 h-5 rounded-full bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-500">
+                            <div className="w-5 h-5 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center text-accent">
                               <Bot size={11} />
                             </div>
                             <div>
@@ -1729,7 +1986,7 @@ export default function MobileSimulator() {
                               <div
                                 className={`p-2 rounded-xl text-[10px] font-sans leading-normal ${
                                   msg.sender === 'user'
-                                    ? 'bg-orange-600 text-white rounded-br-none shadow-sm'
+                                    ? 'bg-accent text-white rounded-br-none shadow-sm'
                                     : 'bg-zinc-900 border border-zinc-850 text-zinc-200 rounded-bl-none shadow-sm'
                                 }`}
                               >
@@ -1747,9 +2004,9 @@ export default function MobileSimulator() {
                             <div className="flex flex-col items-start max-w-[85%]">
                               <div className="bg-zinc-900 border border-zinc-850 p-2 rounded-xl rounded-bl-none flex items-center gap-1.5">
                                 <div className="flex gap-0.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: '300ms' }}></span>
                                 </div>
                                 <span className="text-[8px] text-zinc-500 font-sans italic">NutriAI está respondendo...</span>
                               </div>
@@ -1763,19 +2020,19 @@ export default function MobileSimulator() {
                           <div className="px-2 pb-1.5 flex gap-1 flex-wrap shrink-0">
                             <button
                               onClick={() => { setChatInput('Trocar peito de frango por outra proteína barata'); }}
-                              className="text-[8px] bg-zinc-900 border border-zinc-850 hover:border-orange-500/50 text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-md font-sans transition-all cursor-pointer"
+                              className="text-[8px] bg-zinc-900 border border-zinc-850 hover:border-accent/50 text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-md font-sans transition-all cursor-pointer"
                             >
                               🍗 Substituir Frango
                             </button>
                             <button
                               onClick={() => { setChatInput('Quantas calorias tem 100g de arroz e feijão?'); }}
-                              className="text-[8px] bg-zinc-900 border border-zinc-850 hover:border-orange-500/50 text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-md font-sans transition-all cursor-pointer"
+                              className="text-[8px] bg-zinc-900 border border-zinc-850 hover:border-accent/50 text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-md font-sans transition-all cursor-pointer"
                             >
                               🍚 Calorias Arroz/Feijão
                             </button>
                             <button
                               onClick={() => { setChatInput('Ideia de pré-treino barato para massa muscular'); }}
-                              className="text-[8px] bg-zinc-900 border border-zinc-850 hover:border-orange-500/50 text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-md font-sans transition-all cursor-pointer"
+                              className="text-[8px] bg-zinc-900 border border-zinc-850 hover:border-accent/50 text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-md font-sans transition-all cursor-pointer"
                             >
                               ⚡ Pré-treino Barato
                             </button>
@@ -1793,12 +2050,12 @@ export default function MobileSimulator() {
                             onChange={(e) => setChatInput(e.target.value)}
                             disabled={isChatLoading}
                             placeholder="Perguntar sobre calorias, substitutos..."
-                            className="flex-1 bg-zinc-950 border border-zinc-800/80 text-[10px] rounded-xl px-2.5 py-1 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-orange-500 disabled:opacity-50"
+                            className="flex-1 bg-zinc-950 border border-zinc-800/80 text-[10px] rounded-xl px-2.5 py-1 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-accent disabled:opacity-50"
                           />
                           <button
                             type="submit"
                             disabled={isChatLoading || !chatInput.trim()}
-                            className="bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white p-1.5 rounded-xl transition-all flex items-center justify-center shrink-0 cursor-pointer"
+                            className="bg-accent hover:bg-accent-hover disabled:bg-zinc-800 disabled:text-zinc-600 text-white p-1.5 rounded-xl transition-all flex items-center justify-center shrink-0 cursor-pointer"
                           >
                             <Send size={10} />
                           </button>
@@ -1818,32 +2075,48 @@ export default function MobileSimulator() {
                     exit="exit"
                     className="space-y-4 flex-1 flex flex-col justify-between py-2"
                   >
-                    <div className="space-y-4">
-                      <div className="text-center pt-2">
-                        <div className="relative w-16 h-16 mx-auto mb-2">
+                    <div className="space-y-3">
+                      <div className="text-center pt-1.5">
+                        <div className="relative w-14 h-14 mx-auto mb-1.5">
                           {googleUser?.avatarUrl ? (
                             <img
                               src={googleUser.avatarUrl}
                               alt="Avatar"
                               referrerPolicy="no-referrer"
-                              className="w-16 h-16 rounded-full border-2 border-orange-500 bg-zinc-800 object-cover"
+                              className="w-14 h-14 rounded-full border-2 border-accent bg-zinc-800 object-cover"
                             />
                           ) : (
-                            <div className="w-16 h-16 rounded-full bg-zinc-800 border-2 border-orange-500 flex items-center justify-center text-zinc-300">
-                              <User size={32} />
+                            <div className={`w-14 h-14 rounded-full border-2 border-accent flex items-center justify-center ${isDark ? 'bg-zinc-800 text-zinc-350' : 'bg-zinc-200 text-zinc-650'}`}>
+                              <User size={28} />
                             </div>
                           )}
-                          <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-zinc-900 rounded-full"></div>
+                          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-zinc-900 rounded-full"></div>
                         </div>
-                        <h3 className="text-sm font-bold text-white font-sans">{googleUser?.name || 'Atleta PersonalPessoal'}</h3>
-                        <p className="text-[10px] text-zinc-500 font-mono truncate px-4">{googleUser?.email || 'atleta@exemplo.com'}</p>
-                        <span className="inline-block text-[8px] bg-green-950 text-green-400 border border-green-900/60 rounded px-1.5 py-0.5 mt-1 font-mono uppercase tracking-wider font-semibold">
+                        <h3 className={`text-xs font-bold ${isDark ? 'text-white' : 'text-zinc-900'} font-sans`}>{googleUser?.name || 'Atleta PersonalPessoal'}</h3>
+                        <p className={`text-[9px] ${isDark ? 'text-zinc-500' : 'text-zinc-600'} font-mono truncate px-4`}>{googleUser?.email || 'atleta@exemplo.com'}</p>
+                        <span className="inline-block text-[7px] bg-green-950 text-green-400 border border-green-900/60 rounded px-1.5 py-0.5 mt-1 font-mono uppercase tracking-wider font-semibold">
                           Google Auth Ativo
                         </span>
                       </div>
 
                       {/* Info list */}
-                      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-3.5 space-y-2.5 max-h-[250px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-850">
+                      <div className={`${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-200/80 shadow-2xs'} border rounded-2xl p-3 space-y-2 max-h-[175px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 transition-colors`}>
+                        <div className="flex justify-between items-center text-[10.5px]">
+                          <span className="text-zinc-500 font-sans">Sexo Biológico</span>
+                          <select
+                            value={profile.gender || 'masculino'}
+                            onChange={(e) => {
+                              const newGender = e.target.value as any;
+                              const updatedProfile = { ...profile, gender: newGender };
+                              setProfile(updatedProfile);
+                              localStorage.setItem('gymdemocra_profile', JSON.stringify(updatedProfile));
+                            }}
+                            className={`${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-200'} text-accent text-[10px] font-bold font-sans rounded px-1.5 py-0.5 focus:outline-none focus:border-accent cursor-pointer`}
+                          >
+                            <option value="masculino" className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>Masculino</option>
+                            <option value="feminino" className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>Feminino</option>
+                          </select>
+                        </div>
                         <div className="flex justify-between items-center text-[10.5px]">
                           <span className="text-zinc-500 font-sans">Objetivo</span>
                           <select
@@ -1855,13 +2128,13 @@ export default function MobileSimulator() {
                               localStorage.setItem('gymdemocra_profile', JSON.stringify(updatedProfile));
                               setSelectedDayIdx(0);
                             }}
-                            className="bg-zinc-900 border border-zinc-800 text-orange-400 text-[10px] font-bold font-sans rounded px-1.5 py-0.5 focus:outline-none focus:border-orange-500 cursor-pointer"
+                            className={`${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-200'} text-accent text-[10px] font-bold font-sans rounded px-1.5 py-0.5 focus:outline-none focus:border-accent cursor-pointer`}
                           >
-                            <option value="ganhar_massa" className="bg-zinc-950 text-zinc-300">Ganhar Massa</option>
-                            <option value="emagrecer" className="bg-zinc-950 text-zinc-300">Emagrecer</option>
-                            <option value="ganhar_forca" className="bg-zinc-950 text-zinc-300">Ganhar Força</option>
-                            <option value="definicao" className="bg-zinc-950 text-zinc-300">Definição</option>
-                            <option value="saude_longevidade" className="bg-zinc-950 text-zinc-300">Saúde</option>
+                            <option value="ganhar_massa" className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>Ganhar Massa</option>
+                            <option value="emagrecer" className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>Emagrecer</option>
+                            <option value="ganhar_forca" className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>Ganhar Força</option>
+                            <option value="definicao" className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>Definição</option>
+                            <option value="saude_longevidade" className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>Saúde</option>
                           </select>
                         </div>
                         <div className="flex justify-between items-center text-[10.5px]">
@@ -1875,10 +2148,10 @@ export default function MobileSimulator() {
                               localStorage.setItem('gymdemocra_profile', JSON.stringify(updatedProfile));
                               setSelectedDayIdx(0);
                             }}
-                            className="bg-zinc-900 border border-zinc-800 text-orange-400 text-[10px] font-bold font-sans rounded px-1.5 py-0.5 focus:outline-none focus:border-orange-500 cursor-pointer"
+                            className={`${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-200'} text-accent text-[10px] font-bold font-sans rounded px-1.5 py-0.5 focus:outline-none focus:border-accent cursor-pointer`}
                           >
-                            <option value="academia_media" className="bg-zinc-950 text-zinc-300">Academia</option>
-                            <option value="casa_calistenia" className="bg-zinc-950 text-zinc-300">Em Casa</option>
+                            <option value="academia_media" className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>Academia</option>
+                            <option value="casa_calistenia" className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>Em Casa</option>
                           </select>
                         </div>
                         <div className="flex justify-between items-center text-[10.5px]">
@@ -1892,10 +2165,10 @@ export default function MobileSimulator() {
                               localStorage.setItem('gymdemocra_profile', JSON.stringify(updatedProfile));
                               setSelectedDayIdx(0);
                             }}
-                            className="bg-zinc-900 border border-zinc-800 text-orange-400 text-[10px] font-bold font-sans rounded px-1.5 py-0.5 focus:outline-none focus:border-orange-500 cursor-pointer"
+                            className={`${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-200'} text-accent text-[10px] font-bold font-sans rounded px-1.5 py-0.5 focus:outline-none focus:border-accent cursor-pointer`}
                           >
                             {[1, 2, 3, 4, 5, 6, 7].map(d => (
-                              <option key={d} value={d} className="bg-zinc-950 text-zinc-300">
+                              <option key={d} value={d} className={isDark ? "bg-zinc-950 text-zinc-350" : "bg-white text-zinc-700"}>
                                 {d} {d === 1 ? 'dia' : 'dias'}
                               </option>
                             ))}
@@ -1903,51 +2176,52 @@ export default function MobileSimulator() {
                         </div>
                         <div className="flex justify-between items-center text-[10.5px]">
                           <span className="text-zinc-500 font-sans">Peso Registrado</span>
-                          <span className="font-bold text-zinc-200 font-mono">{profile.weight} kg</span>
+                          <span className={`font-bold ${isDark ? 'text-zinc-200' : 'text-zinc-800'} font-mono`}>{profile.weight} kg</span>
                         </div>
                         {profile.height && (
-                          <div className="flex justify-between items-center text-[10.5px] border-t border-zinc-900 pt-2">
+                          <div className={`flex justify-between items-center text-[10.5px] border-t ${isDark ? 'border-zinc-900/60' : 'border-zinc-150'} pt-1.5`}>
                             <span className="text-zinc-500 font-sans">Altura Registrada</span>
-                            <span className="font-bold text-zinc-200 font-mono">{profile.height} cm</span>
+                            <span className={`font-bold ${isDark ? 'text-zinc-200' : 'text-zinc-800'} font-mono`}>{profile.height} cm</span>
                           </div>
                         )}
                         {profile.desiredWeight && (
                           <div className="flex justify-between items-center text-[10.5px]">
                             <span className="text-zinc-500 font-sans">Meta de Peso</span>
-                            <span className="font-bold text-green-400 font-mono">{profile.desiredWeight} kg</span>
+                            <span className="font-bold text-green-500 font-mono">{profile.desiredWeight} kg</span>
                           </div>
                         )}
                         {profile.height && profile.weight && (
                           <div className="flex justify-between items-center text-[10.5px]">
                             <span className="text-zinc-500 font-sans">IMC Calculado</span>
-                            <span className="font-bold text-orange-400 font-mono">
+                            <span className="font-bold text-accent font-mono">
                               {(profile.weight / Math.pow(profile.height / 100, 2)).toFixed(1)}
                             </span>
                           </div>
                         )}
+
                         {profile.experienceLevel && (
-                          <div className="flex justify-between items-center text-[10.5px] border-t border-zinc-900 pt-2">
+                          <div className={`flex justify-between items-center text-[10.5px] border-t ${isDark ? 'border-zinc-900/60' : 'border-zinc-150'} pt-1.5`}>
                             <span className="text-zinc-500 font-sans">Experiência</span>
-                            <span className="font-bold text-zinc-300 capitalize font-sans">{profile.experienceLevel}</span>
+                            <span className={`font-bold ${isDark ? 'text-zinc-300' : 'text-zinc-800'} capitalize font-sans`}>{profile.experienceLevel}</span>
                           </div>
                         )}
                         {profile.workoutDurationCategory && (
                           <div className="flex justify-between items-center text-[10.5px]">
                             <span className="text-zinc-500 font-sans">Tempo de Treino</span>
-                            <span className="font-bold text-zinc-300 capitalize font-sans">{profile.workoutDurationCategory}</span>
+                            <span className={`font-bold ${isDark ? 'text-zinc-300' : 'text-zinc-800'} capitalize font-sans`}>{profile.workoutDurationCategory}</span>
                           </div>
                         )}
                         {profile.healthLimitations && (
-                          <div className="flex justify-between items-start text-[10.5px] border-t border-zinc-900 pt-2">
+                          <div className={`flex justify-between items-start text-[10.5px] border-t ${isDark ? 'border-zinc-900/60' : 'border-zinc-150'} pt-1.5`}>
                             <span className="text-zinc-500 font-sans">Limitações</span>
                             <div className="text-right flex flex-col gap-0.5 max-w-[120px]">
                               {profile.healthLimitations.includes('nenhuma') ? (
-                                <span className="font-bold text-green-400">Nenhuma</span>
+                                <span className="font-bold text-green-500">Nenhuma</span>
                               ) : (
                                 profile.healthLimitations.map(lim => {
                                   const label = HEALTH_LIMITATIONS_OPTIONS.find(o => o.id === lim)?.name || lim;
                                   return (
-                                    <span key={lim} className="text-[9px] font-bold text-red-400 capitalize">
+                                    <span key={lim} className="text-[9px] font-bold text-red-500 capitalize">
                                       {label}
                                     </span>
                                   );
@@ -1957,22 +2231,83 @@ export default function MobileSimulator() {
                           </div>
                         )}
                       </div>
+
+                      {/* Configurações de Aparência (Desejo do Usuário) */}
+                      <div className={`${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-200/80 shadow-2xs'} border rounded-2xl p-3 space-y-2.5 transition-colors`}>
+                        <div className="flex justify-between items-center text-[10.5px]">
+                          <span className={`font-bold ${isDark ? 'text-zinc-400' : 'text-zinc-650'} font-sans flex items-center gap-1`}>
+                            {isDark ? <Moon size={11} className="text-yellow-400 fill-yellow-400/10" /> : <Sun size={11} className="text-amber-500 fill-amber-500/10" />}
+                            Tema do Simulador
+                          </span>
+                          <div className={`flex p-0.5 rounded-lg border max-w-[130px] w-full shrink-0 ${isDark ? 'bg-zinc-900/45 border-zinc-800/60' : 'bg-zinc-100 border-zinc-200'}`}>
+                            <button
+                              onClick={() => { if (isDark) toggleDarkMode(); }}
+                              className={`flex-1 py-1 px-1.5 rounded-md text-[8px] font-bold font-sans transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                !isDark
+                                  ? 'bg-accent text-white shadow-xs'
+                                  : 'text-zinc-500 hover:text-zinc-300'
+                              }`}
+                            >
+                              ☀️ Claro
+                            </button>
+                            <button
+                              onClick={() => { if (!isDark) toggleDarkMode(); }}
+                              className={`flex-1 py-1 px-1.5 rounded-md text-[8px] font-bold font-sans transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                isDark
+                                  ? 'bg-accent text-white shadow-xs'
+                                  : 'text-zinc-500 hover:text-zinc-300'
+                              }`}
+                            >
+                              🌙 Escuro
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Seletor de Paleta de Cores de Alta Visibilidade */}
+                        <div className={`border-t ${isDark ? 'border-zinc-900' : 'border-zinc-150'} pt-2`}>
+                          <span className={`text-[9px] font-bold ${isDark ? 'text-zinc-400' : 'text-zinc-600'} uppercase tracking-wide block mb-1.5 font-sans flex items-center gap-1`}>
+                            <Sparkles size={11} className="text-accent animate-pulse" />
+                            Cor de Destaque
+                          </span>
+                          <div className="grid grid-cols-3 gap-1">
+                            {Object.entries(PALETTE_COLORS).map(([id, item]) => {
+                              const isSelected = activePalette === id;
+                              return (
+                                <button
+                                  key={id}
+                                  onClick={() => handlePaletteChange(id)}
+                                  className={`py-1 px-0.5 rounded-lg border flex items-center justify-center gap-1 transition-all text-[8px] font-bold cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-accent/15 border-accent text-accent'
+                                      : isDark
+                                        ? 'bg-zinc-900 border-zinc-800/80 text-zinc-400 hover:text-white'
+                                        : 'bg-zinc-50 border-zinc-200 text-zinc-650 hover:text-zinc-900'
+                                  }`}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: item.color }}></span>
+                                  <span className="truncate">{item.name.split(' ')[0]}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <button
                         onClick={handleResetProfile}
-                        className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-750 rounded-xl text-[10px] font-bold font-sans flex items-center justify-center gap-1.5 transition-all"
+                        className={`w-full py-2 ${isDark ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border-zinc-750' : 'bg-zinc-200 hover:bg-zinc-300 text-zinc-750 border-zinc-300'} border rounded-xl text-[10px] font-bold font-sans flex items-center justify-center gap-1.5 transition-all cursor-pointer`}
                       >
                         <RefreshCw size={11} /> Refazer Questionário
                       </button>
                       <button
                         onClick={handleGoogleLogout}
-                        className="w-full py-2 bg-red-950/40 hover:bg-red-950/60 text-red-400 border border-red-900/40 hover:border-red-900/85 rounded-xl text-[10px] font-bold font-sans flex items-center justify-center gap-1.5 transition-all"
+                        className={`w-full py-2 ${isDark ? 'bg-red-950/40 hover:bg-red-950/60 text-red-400 border-red-900/40' : 'bg-red-50 hover:bg-red-100 text-red-500 border-red-200'} border rounded-xl text-[10px] font-bold font-sans flex items-center justify-center gap-1.5 transition-all cursor-pointer`}
                       >
                         Sair da Conta Google
                       </button>
-                      <p className="text-[8px] text-zinc-650 text-center font-sans">
+                      <p className={`text-[8px] ${isDark ? 'text-zinc-650' : 'text-zinc-500'} text-center font-sans`}>
                         Este simulador salva seus dados localmente via localStorage.
                       </p>
                     </div>
@@ -1986,7 +2321,7 @@ export default function MobileSimulator() {
                   <button
                     onClick={() => setActiveTab('treino')}
                     className={`flex flex-col items-center gap-0.5 pb-1 transition-colors ${
-                      activeTab === 'treino' ? 'text-orange-500' : 'text-zinc-500 hover:text-zinc-300'
+                      activeTab === 'treino' ? 'text-accent' : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
                     <Dumbbell size={16} />
@@ -1996,7 +2331,7 @@ export default function MobileSimulator() {
                   <button
                     onClick={() => setActiveTab('alimentacao')}
                     className={`flex flex-col items-center gap-0.5 pb-1 transition-colors ${
-                      activeTab === 'alimentacao' ? 'text-orange-500' : 'text-zinc-500 hover:text-zinc-300'
+                      activeTab === 'alimentacao' ? 'text-accent' : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
                     <Utensils size={16} />
@@ -2006,7 +2341,7 @@ export default function MobileSimulator() {
                   <button
                     onClick={() => setActiveTab('perfil')}
                     className={`flex flex-col items-center gap-0.5 pb-1 transition-colors ${
-                      activeTab === 'perfil' ? 'text-orange-500' : 'text-zinc-500 hover:text-zinc-300'
+                      activeTab === 'perfil' ? 'text-accent' : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
                     <User size={16} />
@@ -2023,7 +2358,7 @@ export default function MobileSimulator() {
             <div className="absolute inset-0 bg-black/85 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
               <div className="bg-zinc-900 border border-zinc-800 w-full max-w-[280px] rounded-3xl p-5 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
                 <div className="text-center space-y-2">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-500 flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
                     <AlertTriangle size={24} />
                   </div>
                   <h3 className="text-sm font-extrabold text-white font-sans uppercase tracking-wider">
@@ -2041,7 +2376,7 @@ export default function MobileSimulator() {
                     onClick={confirmAction === 'reset_profile' ? executeResetProfile : executeGoogleLogout}
                     className={`w-full py-2.5 rounded-xl text-xs font-bold font-sans transition-all active:scale-95 cursor-pointer text-white ${
                       confirmAction === 'reset_profile'
-                        ? 'bg-orange-600 hover:bg-orange-500'
+                        ? 'bg-accent hover:bg-accent-hover'
                         : 'bg-red-600 hover:bg-red-500'
                     }`}
                   >
@@ -2084,7 +2419,7 @@ export default function MobileSimulator() {
                     </svg>
                   </div>
                   <h3 className="text-sm font-bold text-white font-sans">Fazer login com o Google</h3>
-                  <p className="text-[10px] text-zinc-400 font-sans">para prosseguir para <span className="text-orange-400 font-semibold">PersonalPessoal</span></p>
+                  <p className="text-[10px] text-zinc-400 font-sans">para prosseguir para <span className="text-accent font-semibold">PersonalPessoal</span></p>
                 </div>
 
                 <div className="space-y-2 max-h-[220px] overflow-y-auto pr-0.5">
@@ -2093,14 +2428,14 @@ export default function MobileSimulator() {
                     onClick={() => handleSelectGoogleAccount('c.katsumi@gmail.com', 'Carlos Katsumi')}
                     className="w-full flex items-center gap-3 p-3 bg-zinc-950 hover:bg-zinc-850 border border-zinc-800 rounded-2xl text-left transition-colors cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center font-bold text-zinc-950 font-sans text-xs">
+                    <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center font-bold text-zinc-950 font-sans text-xs">
                       CK
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-white font-sans">Carlos Katsumi</p>
                       <p className="text-[10px] text-zinc-500 font-mono truncate">c.katsumi@gmail.com</p>
                     </div>
-                    <div className="text-[9px] bg-orange-500/10 text-orange-400 border border-orange-500/20 px-1.5 py-0.5 rounded font-mono font-bold">
+                    <div className="text-[9px] bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded font-mono font-bold">
                       Você
                     </div>
                   </button>
@@ -2127,7 +2462,7 @@ export default function MobileSimulator() {
                       placeholder="seu.email@exemplo.com"
                       value={customEmail}
                       onChange={(e) => setCustomEmail(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 text-xs px-2.5 py-2 rounded-xl text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500 font-sans"
+                      className="w-full bg-zinc-900 border border-zinc-800 text-xs px-2.5 py-2 rounded-xl text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-accent font-sans"
                     />
                     <button
                       onClick={() => {
@@ -2139,7 +2474,7 @@ export default function MobileSimulator() {
                           alert('Por favor, digite um e-mail válido.');
                         }
                       }}
-                      className="w-full py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-[10px] font-bold font-sans transition-colors cursor-pointer"
+                      className="w-full py-2 bg-accent hover:bg-accent-hover text-white rounded-xl text-[10px] font-bold font-sans transition-colors cursor-pointer"
                     >
                       Entrar com este e-mail
                     </button>
@@ -2159,11 +2494,11 @@ export default function MobileSimulator() {
           {/* Simulated loading state during authenticating on Supabase */}
           {isLoggingIn && (
             <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-50 p-4 text-center space-y-4">
-              <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
               <div className="space-y-1">
                 <p className="text-xs font-bold text-white font-sans">Conectando ao Supabase Auth...</p>
                 <p className="text-[9px] text-zinc-500 font-mono animate-pulse">Validando Google ID Token...</p>
-                <p className="text-[9px] text-orange-400/80 font-sans">Sincronizando tabelas e perfis de usuário</p>
+                <p className="text-[9px] text-accent/80 font-sans">Sincronizando tabelas e perfis de usuário</p>
               </div>
             </div>
           )}

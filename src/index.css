@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@theme {
+  --color-accent: var(--accent, #f97316);
+  --color-accent-hover: var(--accent-hover, #ea580c);
+  --color-accent-glow: var(--accent-glow, rgba(249, 115, 22, 0.15));
+}
+
+:root {
+  --accent: #f97316;
+  --accent-hover: #ea580c;
+  --accent-glow: rgba(249, 115, 22, 0.15);
+}

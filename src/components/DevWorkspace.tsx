@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabaseSQL } from '../data/dbSchema';
 import { projectFilesTree, FileNode } from '../data/projectFiles';
-import { Database, FolderTree, Terminal, Copy, Check, ChevronRight, ChevronDown, Play, FileText, Code2 } from 'lucide-react';
+import { Database, FolderTree, Terminal, Copy, Check, ChevronRight, ChevronDown, Play, FileText, Code2, BarChart2 } from 'lucide-react';
+import AnalyticalDashboard from './AnalyticalDashboard';
 
 export default function DevWorkspace() {
-  const [activeTab, setActiveTab] = useState<'supabase' | 'folder' | 'terminal'>('supabase');
+  const [activePalette, setActivePalette] = useState(() => {
+    return localStorage.getItem('personalpessoal_accent_palette') || 'laranja';
+  });
+
+  useEffect(() => {
+    const syncTheme = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setActivePalette(customEvent.detail);
+      }
+    };
+    window.addEventListener('personalpessoal_palette_changed', syncTheme);
+    return () => window.removeEventListener('personalpessoal_palette_changed', syncTheme);
+  }, []);
+
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'supabase' | 'folder' | 'terminal'>('dashboard');
   const [copied, setCopied] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileNode | null>(null);
   const [terminalOutput, setTerminalOutput] = useState<string[]>([
@@ -41,7 +57,7 @@ export default function DevWorkspace() {
           style={{ paddingLeft: `${depth * 16}px` }}
           className={`flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors ${
             selectedFile?.name === node.name
-              ? 'bg-orange-950/40 text-orange-400 border-l-2 border-orange-500'
+              ? 'bg-accent/10 text-accent border-l-2 border-accent'
               : 'hover:bg-zinc-800/40 text-zinc-300'
           }`}
         >
@@ -174,10 +190,21 @@ export default function DevWorkspace() {
 
         <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1">
           <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium font-sans transition-colors ${
+              activeTab === 'dashboard'
+                ? 'bg-accent text-white shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+            }`}
+          >
+            <BarChart2 size={14} />
+            Dashboard Analítico
+          </button>
+          <button
             onClick={() => setActiveTab('supabase')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium font-sans transition-colors ${
               activeTab === 'supabase'
-                ? 'bg-orange-600 text-white shadow-sm'
+                ? 'bg-accent text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
             }`}
           >
@@ -188,7 +215,7 @@ export default function DevWorkspace() {
             onClick={() => setActiveTab('folder')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium font-sans transition-colors ${
               activeTab === 'folder'
-                ? 'bg-orange-600 text-white shadow-sm'
+                ? 'bg-accent text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
             }`}
           >
@@ -199,7 +226,7 @@ export default function DevWorkspace() {
             onClick={() => setActiveTab('terminal')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium font-sans transition-colors ${
               activeTab === 'terminal'
-                ? 'bg-orange-600 text-white shadow-sm'
+                ? 'bg-accent text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
             }`}
           >
@@ -211,16 +238,20 @@ export default function DevWorkspace() {
 
       {/* Content Area */}
       <div className="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-220px)] min-h-[500px]">
+        {activeTab === 'dashboard' && (
+          <AnalyticalDashboard />
+        )}
+
         {activeTab === 'supabase' && (
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2 font-sans">
-                <Database className="text-orange-500" />
+                <Database className="text-accent" />
                 Esquema PostgreSQL pronto para Supabase
               </h2>
               <p className="text-zinc-400 text-sm mt-1 font-sans">
                 Abaixo está o script SQL projetado para garantir alto desempenho, segurança e consistência relacional.
-                Ele cria as tabelas de <code className="text-orange-400">usuarios</code>, <code className="text-orange-400">exercicios</code> (catálogo pré-populado), <code className="text-orange-400">fichas_treino</code> e <code className="text-orange-400">treino_exercicios</code>.
+                Ele cria as tabelas de <code className="text-accent">usuarios</code>, <code className="text-accent">exercicios</code> (catálogo pré-populado), <code className="text-accent">fichas_treino</code> e <code className="text-accent">treino_exercicios</code>.
               </p>
             </div>
 
@@ -228,7 +259,7 @@ export default function DevWorkspace() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800">
                 <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                   Garantia de Integridade Relacional
                 </h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed font-sans">
@@ -238,7 +269,7 @@ export default function DevWorkspace() {
 
               <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800">
                 <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                   Row Level Security (RLS) Ativo
                 </h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed font-sans">
@@ -248,7 +279,7 @@ export default function DevWorkspace() {
 
               <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800">
                 <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                   Índices de Performance Criados
                 </h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed font-sans">
@@ -258,7 +289,7 @@ export default function DevWorkspace() {
 
               <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800">
                 <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                   Sincronização com Supabase Auth
                 </h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed font-sans">
@@ -268,7 +299,7 @@ export default function DevWorkspace() {
 
               <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800/80 md:col-span-2 space-y-1.5">
                 <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                   Configuração de Google OAuth + Supabase Auth
                 </h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed font-sans">
@@ -276,9 +307,9 @@ export default function DevWorkspace() {
                 </p>
                 <ol className="list-decimal list-inside text-xs text-zinc-450 space-y-1 ml-1 font-sans">
                   <li>Acesse o <strong className="text-zinc-300">Google Cloud Console</strong> e crie uma credencial de <strong className="text-zinc-300">ID do cliente OAuth (Aplicativo da Web)</strong>.</li>
-                  <li>No painel do seu projeto <strong className="text-zinc-300">Supabase</strong>, vá em <strong className="text-orange-400">Authentication ➔ Providers ➔ Google</strong>.</li>
+                  <li>No painel do seu projeto <strong className="text-zinc-300">Supabase</strong>, vá em <strong className="text-accent">Authentication ➔ Providers ➔ Google</strong>.</li>
                   <li>Ative o provedor e insira o seu <strong className="text-zinc-300">Web Client ID</strong> e o <strong className="text-zinc-300">Client Secret</strong>.</li>
-                  <li>Na sua aplicação móvel, utilize o método <code className="text-orange-400 font-mono">supabase.auth.signInWithIdToken()</code> enviando o ID Token nativo retornado pelo Google Sign-In no celular. Isso evita popups e redirecionamentos web confusos para o atleta!</li>
+                  <li>Na sua aplicação móvel, utilize o método <code className="text-accent font-mono">supabase.auth.signInWithIdToken()</code> enviando o ID Token nativo retornado pelo Google Sign-In no celular. Isso evita popups e redirecionamentos web confusos para o atleta!</li>
                 </ol>
               </div>
             </div>
@@ -308,11 +339,11 @@ export default function DevWorkspace() {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2 font-sans">
-                <FolderTree className="text-orange-500" />
+                <FolderTree className="text-accent" />
                 Estrutura de Pastas Recomendada (Expo SDK 51+)
               </h2>
               <p className="text-zinc-400 text-sm mt-1 font-sans">
-                Uma arquitetura limpa focada em modularidade usando o <code className="text-orange-400">Expo Router (File-based Navigation)</code>.
+                Uma arquitetura limpa focada em modularidade usando o <code className="text-accent">Expo Router (File-based Navigation)</code>.
                 Clique nas pastas e arquivos para ver seus detalhes e modelos de código prontos.
               </p>
             </div>
@@ -332,7 +363,7 @@ export default function DevWorkspace() {
               <div className="lg:col-span-7 flex flex-col bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden">
                 <div className="bg-zinc-900 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
                   <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 font-mono">
-                    <Code2 size={14} className="text-orange-500" />
+                    <Code2 size={14} className="text-accent" />
                     {selectedFile ? selectedFile.name : 'Selecione um Arquivo'}
                   </span>
                   {selectedFile?.code && (
@@ -350,7 +381,7 @@ export default function DevWorkspace() {
                   {selectedFile ? (
                     <div className="space-y-4">
                       <div className="bg-zinc-900/60 p-3 rounded-lg border border-zinc-800/80">
-                        <h4 className="text-xs font-bold text-orange-500 font-sans">FUNÇÃO/DETALHE DO ARQUITETO:</h4>
+                        <h4 className="text-xs font-bold text-accent font-sans">FUNÇÃO/DETALHE DO ARQUITETO:</h4>
                         <p className="text-sm text-zinc-300 mt-1 font-sans leading-relaxed">{selectedFile.description}</p>
                       </div>
 
@@ -386,7 +417,7 @@ export default function DevWorkspace() {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2 font-sans">
-                <Terminal className="text-orange-500" />
+                <Terminal className="text-accent" />
                 Comandos de Inicialização (Passo a Passo)
               </h2>
               <p className="text-zinc-400 text-sm mt-1 font-sans">
@@ -405,7 +436,7 @@ export default function DevWorkspace() {
                     <div>
                       <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1 font-sans">{item.title}</h4>
                       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 flex items-center justify-between mt-2">
-                        <code className="text-xs font-mono text-orange-400 truncate select-all">{item.command}</code>
+                        <code className="text-xs font-mono text-accent truncate select-all">{item.command}</code>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-zinc-900">
