@@ -11,6 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import DevWorkspace from './components/DevWorkspace';
 import MobileSimulator from './components/MobileSimulator';
+import AdManager from './components/AdManager';
 import { Dumbbell, Shield, Cpu, BookOpen, ExternalLink, Flame, Sparkles } from 'lucide-react';
 
 export const PALETTE_COLORS: Record<string, { name: string; color: string; accent: string; hover: string; glow: string }> = {
@@ -138,8 +139,8 @@ export default function App() {
         </div>
 
         {/* Right Side: Smartphone Device Interactive Preview (5/12 cols) */}
-        <div className="xl:col-span-5 flex flex-col items-center">
-          <div className="w-full text-center mb-4">
+        <div className="xl:col-span-5 flex flex-col items-center gap-6">
+          <div className="w-full text-center">
             <span className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-widest block mb-1">
               DISPOSITIVO EMULADO (PREVIEW)
             </span>
@@ -149,6 +150,10 @@ export default function App() {
           </div>
 
           <MobileSimulator />
+          
+          <div className="w-full">
+            <AdManager />
+          </div>
         </div>
       </main>
 

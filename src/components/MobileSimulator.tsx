@@ -25,6 +25,49 @@ const HEALTH_LIMITATIONS_OPTIONS = [
   { id: 'nenhuma', name: 'Nenhuma limitação física', desc: 'Corpo 100% pronto para treinar sem restrições', icon: '✅', warning: 'Seguir treinos normais com técnica impecável' },
 ];
 
+const SIMULATED_ADS = [
+  {
+    brand: 'Growth Supplements 🧪',
+    title: 'Whey Protein Concentrado 80%',
+    desc: 'O Whey mais vendido do Brasil. Matéria-prima importada, alta concentração de aminoácidos e laudo garantido.',
+    promo: 'Cupom: PERSONAL10 (10% OFF)',
+    cta: 'Comprar Agora',
+    color: 'from-blue-600 to-indigo-950',
+    accentColor: 'text-blue-400',
+    btnColor: 'bg-blue-500 hover:bg-blue-600',
+  },
+  {
+    brand: 'SmartFit 🟡',
+    title: 'Plano Black sem Taxa de Adesão',
+    desc: 'Treine em qualquer unidade da América Latina, traga um amigo para treinar com você e ganhe camiseta exclusiva.',
+    promo: 'Taxa zero na adesão este mês!',
+    cta: 'Matricular-se',
+    color: 'from-amber-500 to-yellow-800',
+    accentColor: 'text-yellow-400',
+    btnColor: 'bg-yellow-500 hover:bg-yellow-600 text-zinc-950',
+  },
+  {
+    brand: 'Nike Training Club ⚡',
+    title: 'Nova Linha de Tênis Metcon 9',
+    desc: 'Mais estabilidade para seus levantamentos, maior tração para treinos de alta intensidade e conforto supremo.',
+    promo: 'Frete Grátis na primeira compra',
+    cta: 'Explorar Metcon',
+    color: 'from-zinc-800 to-zinc-950',
+    accentColor: 'text-white',
+    btnColor: 'bg-white text-zinc-950 hover:bg-zinc-200',
+  },
+  {
+    brand: 'IntegralMedica 🔴',
+    title: 'Creatina Hardcore 300g',
+    desc: 'Mais força, mais explosão muscular e hidratação celular. O suplemento indispensável para sua evolução.',
+    promo: 'Desconto de 15% via PIX',
+    cta: 'Garantir Creatina',
+    color: 'from-red-600 to-red-950',
+    accentColor: 'text-red-400',
+    btnColor: 'bg-red-600 hover:bg-red-700',
+  },
+];
+
 const screenVariants = {
   initial: { opacity: 0, scale: 0.97 },
   animate: { opacity: 1, scale: 1, transition: { duration: 0.22, ease: "easeOut" } },
@@ -151,6 +194,19 @@ export default function MobileSimulator() {
   const [editName, setEditName] = useState<string>('');
   const [editSeries, setEditSeries] = useState<string>('');
   const [editRest, setEditRest] = useState<number>(60);
+
+  // Subscription, Ads and Freemium sequence states
+  const [isPremium, setIsPremium] = useState<boolean>(() => {
+    const saved = localStorage.getItem('gymdemocra_is_premium');
+    return saved === 'true'; // Defaults to false (freemium) so they experience the awesome freemium/ad feature
+  });
+  const [activeExerciseIndex, setActiveExerciseIndex] = useState<number>(0);
+  const [isShowingAd, setIsShowingAd] = useState<boolean>(false);
+  const [skipAdSeconds, setSkipAdSeconds] = useState<number>(5);
+  const [currentAdIndex, setCurrentAdIndex] = useState<number>(0);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const activeWorkout = userWorkouts[selectedDayIdx] || userWorkouts[0] || null;
 
   // Simulated day tracking to restrict access and editing based on chronological constraints
   const [simulatedDay, setSimulatedDay] = useState<string>(() => {
@@ -399,6 +455,7 @@ export default function MobileSimulator() {
   const [timerMax, setTimerMax] = useState<number>(60);
   const [timerActive, setTimerActive] = useState<boolean>(false);
   const [timerCompleted, setTimerCompleted] = useState<boolean>(false);
+  const [timerResetCount, setTimerResetCount] = useState<number>(0);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Audio Context for buzzer (using Web Audio API to prevent heavy external files)
@@ -424,7 +481,7 @@ export default function MobileSimulator() {
 
   // Timer effect
   useEffect(() => {
-    if (timerActive && timerSeconds > 0) {
+    if (timerActive) {
       timerIntervalRef.current = setInterval(() => {
         setTimerSeconds(s => {
           if (s <= 1) {
@@ -446,12 +503,26 @@ export default function MobileSimulator() {
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
-  }, [timerActive]);
+  }, [timerActive, timerResetCount]);
 
   const startTimer = (seconds: number) => {
     setTimerMax(seconds);
     setTimerSeconds(seconds);
-    setTimerActive(true);
+    setTimerResetCount(prev => prev + 1);
+    if (seconds <= 0) {
+      setTimerActive(false);
+      setTimerCompleted(true);
+    } else {
+      setTimerActive(true);
+      setTimerCompleted(false);
+    }
+  };
+
+  const prepareTimer = (seconds: number) => {
+    setTimerMax(seconds);
+    setTimerSeconds(seconds);
+    setTimerResetCount(prev => prev + 1);
+    setTimerActive(false);
     setTimerCompleted(false);
   };
 
@@ -537,6 +608,138 @@ export default function MobileSimulator() {
     setWaterDrunk(0);
     localStorage.setItem('gymdemocra_water', '0');
   };
+
+  const togglePremium = () => {
+    setIsPremium(prev => {
+      const next = !prev;
+      localStorage.setItem('gymdemocra_is_premium', next.toString());
+      setToastMessage(next 
+        ? "👑 Assinatura Premium Ativada! Anúncios removidos e sequência livre liberada." 
+        : "🆓 Versão Freemium Ativada. Anúncios serão exibidos durante o descanso."
+      );
+      return next;
+    });
+  };
+
+  const handleSkipAd = () => {
+    setIsShowingAd(false);
+    if (timerSeconds <= 0) {
+      setTimerActive(false);
+      setTimerCompleted(true);
+    } else {
+      setTimerActive(true);
+      setTimerCompleted(false);
+      setToastMessage("⏱️ Anúncio finalizado! Iniciando contagem do descanso...");
+    }
+  };
+
+  // Skip ad count down effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isShowingAd && skipAdSeconds > 0) {
+      interval = setInterval(() => {
+        setSkipAdSeconds(prev => {
+          if (prev <= 1) {
+            if (interval) clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isShowingAd, skipAdSeconds]);
+
+  // Emit ad impressions to AdManager
+  useEffect(() => {
+    if (isShowingAd) {
+      const ad = SIMULATED_ADS[currentAdIndex] || SIMULATED_ADS[0];
+      const event = new CustomEvent('gymdemocra_ad_impression', {
+        detail: { brand: ad.brand }
+      });
+      window.dispatchEvent(event);
+    }
+  }, [isShowingAd, currentAdIndex]);
+
+  // Sync state changes from AdManager and listen to forced ad requests
+  useEffect(() => {
+    const handlePremiumFromManager = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const val = customEvent.detail?.isPremium;
+      setIsPremium(val);
+    };
+
+    const handleForceAdFromManager = () => {
+      if (isPremium) return;
+      
+      const nextAdIdx = (currentAdIndex + 1) % SIMULATED_ADS.length;
+      setCurrentAdIndex(nextAdIdx);
+      setSkipAdSeconds(5);
+      setIsShowingAd(true);
+      prepareTimer(30); // Prepares a 30 second simulated rest (starts after ad)
+      setToastMessage("📺 Anúncio Intersticial Forçado via AdManager!");
+    };
+
+    window.addEventListener('gymdemocra_premium_changed_by_manager', handlePremiumFromManager);
+    window.addEventListener('gymdemocra_force_ad_by_manager', handleForceAdFromManager);
+
+    return () => {
+      window.removeEventListener('gymdemocra_premium_changed_by_manager', handlePremiumFromManager);
+      window.removeEventListener('gymdemocra_force_ad_by_manager', handleForceAdFromManager);
+    };
+  }, [isPremium, currentAdIndex]);
+
+  // Dispatch premium updates to AdManager when changed locally
+  useEffect(() => {
+    const event = new CustomEvent('gymdemocra_premium_changed', {
+      detail: { isPremium }
+    });
+    window.dispatchEvent(event);
+  }, [isPremium]);
+
+  // Reset indices on day index or simulated day changes
+  useEffect(() => {
+    setActiveExerciseIndex(0);
+    setIsShowingAd(false);
+    setTimerActive(false);
+  }, [selectedDayIdx, simulatedDay]);
+
+  // Toast message timeout
+  useEffect(() => {
+    if (toastMessage) {
+      const t = setTimeout(() => {
+        setToastMessage(null);
+      }, 3500);
+      return () => clearTimeout(t);
+    }
+  }, [toastMessage]);
+
+  // Auto-dismiss the "FIM DO DESCANSO! VAI!" notification after 6 seconds
+  useEffect(() => {
+    if (timerCompleted) {
+      const t = setTimeout(() => {
+        setTimerCompleted(false);
+      }, 6000);
+      return () => clearTimeout(t);
+    }
+  }, [timerCompleted]);
+
+  // Auto-advance exercise index on timer completion in freemium
+  useEffect(() => {
+    if (timerCompleted && !isPremium && activeWorkout) {
+      setTimerCompleted(false);
+      
+      const nextIndex = activeExerciseIndex + 1;
+      setActiveExerciseIndex(nextIndex);
+      if (nextIndex < activeWorkout.exercises.length) {
+        setToastMessage(`⚡ Descanso concluído! Exercício "${activeWorkout.exercises[nextIndex].name}" liberado.`);
+      } else {
+        setToastMessage("🏆 Parabéns! Você concluiu todo o treino de hoje!");
+      }
+    }
+  }, [timerCompleted, isPremium, activeWorkout, activeExerciseIndex]);
 
   const toggleExerciseCheck = (id: string) => {
     if (activeWorkout) {
@@ -655,8 +858,6 @@ export default function MobileSimulator() {
     setEditingExerciseId(null);
   };
 
-  const activeWorkout = userWorkouts[selectedDayIdx] || userWorkouts[0] || null;
-
   // Nutritional limits
   const waterTarget = profile ? profile.weight * 35 : 2500;
   const proteinTarget = profile ? profile.weight * 2.0 : 150;
@@ -682,6 +883,131 @@ export default function MobileSimulator() {
 
         {/* Smartphone Screen Canvas */}
         <div className={`flex-1 ${isDark ? 'bg-zinc-900 text-white' : 'bg-zinc-50 text-zinc-900'} rounded-[38px] overflow-hidden flex flex-col relative pt-5 pb-2 transition-colors duration-200`}>
+          {/* TOAST MESSAGE OVERLAY */}
+          <AnimatePresence>
+            {toastMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute top-12 left-4 right-4 bg-zinc-950/95 border border-amber-500/30 text-amber-300 px-3.5 py-2.5 rounded-2xl shadow-xl shadow-black/45 z-[60] flex items-center gap-2"
+              >
+                <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-extrabold text-[10px] shrink-0">
+                  ✨
+                </div>
+                <p className="text-[9.5px] font-sans font-semibold leading-snug flex-1">
+                  {toastMessage}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* INTERSTITIAL AD OVERLAY FOR FREEMIUM */}
+          <AnimatePresence>
+            {isShowingAd && (
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="absolute inset-0 bg-zinc-950 z-50 flex flex-col justify-between p-5 pt-10 text-white"
+              >
+                {/* Ad Header */}
+                <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[7.5px] font-bold uppercase tracking-widest bg-orange-600 text-white px-2 py-0.5 rounded-sm font-mono animate-pulse">
+                      Patrocinado
+                    </span>
+                    <span className="text-[9px] font-mono text-zinc-400">Ads Freemium</span>
+                  </div>
+                  <div className="bg-zinc-900 border border-zinc-800 px-2 py-1 rounded font-mono text-[9px] text-orange-400 flex items-center gap-1">
+                    <Clock size={9} className="animate-spin text-orange-500" />
+                    <span>Descanso: <strong>{timerSeconds}s</strong></span>
+                  </div>
+                </div>
+
+                {/* Ad Core Content (Brand specific) */}
+                {(() => {
+                  const ad = SIMULATED_ADS[currentAdIndex] || SIMULATED_ADS[0];
+                  return (
+                    <div className="flex-1 flex flex-col justify-center my-6 space-y-4">
+                      {/* Campaign Card */}
+                      <div className={`rounded-2xl bg-gradient-to-br ${ad.color} p-4 border border-white/10 shadow-lg text-white space-y-3 relative overflow-hidden flex flex-col justify-between min-h-[220px]`}>
+                        {/* Decorative background logo */}
+                        <div className="absolute right-[-20px] bottom-[-20px] text-white/5 text-[90px] font-black select-none pointer-events-none">
+                          FIT
+                        </div>
+
+                        <div className="space-y-1 z-10">
+                          <span className="text-[10px] font-mono font-bold tracking-widest text-white/80 uppercase block">
+                            {ad.brand}
+                          </span>
+                          <h4 className="text-base font-black tracking-tight leading-tight">
+                            {ad.title}
+                          </h4>
+                        </div>
+
+                        <p className="text-[10px] text-zinc-200 leading-normal z-10 font-sans">
+                          {ad.desc}
+                        </p>
+
+                        <div className="bg-white/10 border border-white/10 rounded-lg p-2 text-center z-10">
+                          <span className="text-[9.5px] font-mono font-bold text-amber-300">
+                            {ad.promo}
+                          </span>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setToastMessage(`🔗 Afiliado: Redirecionando para ${ad.brand}! Comissão de R$ 4,50 registrada.`);
+                            const event = new CustomEvent('gymdemocra_ad_click', {
+                              detail: { brand: ad.brand }
+                            });
+                            window.dispatchEvent(event);
+                          }}
+                          className={`w-full py-2 ${ad.btnColor} text-white font-extrabold text-[10.5px] rounded-xl transition-all active:scale-95 shadow-lg shadow-black/20 z-10 uppercase tracking-wider font-sans`}
+                        >
+                          {ad.cta}
+                        </button>
+                      </div>
+
+                      {/* Earnings explanation */}
+                      <div className="bg-zinc-900/60 border border-zinc-850/80 p-3 rounded-xl space-y-1 text-center">
+                        <span className="text-[8.5px] font-bold text-emerald-400 uppercase tracking-wider block font-sans">
+                          🪙 Como este app gera renda?
+                        </span>
+                        <p className="text-[8.5px] text-zinc-400 font-sans leading-normal">
+                          Visualizações de ads no descanso geram <strong>R$ 0,15 por exibição</strong>. Cliques em parceiros geram comissões de afiliado de até <strong>R$ 4,50</strong>!
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Ad Footer / Skip actions */}
+                <div className="border-t border-zinc-900 pt-4 flex flex-col items-center gap-2">
+                  {skipAdSeconds > 0 ? (
+                    <div className="w-full text-center py-2 bg-zinc-900 border border-zinc-800 rounded-xl">
+                      <span className="text-[9.5px] font-bold text-zinc-400 font-mono">
+                        Próximo exercício destrava em <span className="text-orange-500 font-extrabold">{skipAdSeconds}s</span>...
+                      </span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleSkipAd}
+                      className="w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 text-[11px] font-black rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1 uppercase tracking-wider font-sans shadow-md shadow-black/20"
+                    >
+                      Pular Anúncio & Ir p/ Próximo <ChevronRight size={12} strokeWidth={3} />
+                    </button>
+                  )}
+
+                  <span className="text-[8px] text-zinc-500 font-sans">
+                    Remova todos os anúncios assinando o plano <strong>Premium PRO 👑</strong>
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Mock Status Bar */}
           <div className={`px-5 py-1.5 flex justify-between items-center text-[11px] font-medium font-sans ${isDark ? 'text-zinc-400 bg-zinc-950/20' : 'text-zinc-600 bg-zinc-200/40'} z-10 transition-colors`}>
             <span>09:41</span>
@@ -1307,6 +1633,49 @@ export default function MobileSimulator() {
                       </div>
                     </div>
 
+                    {/* Subscription Status Toggle Card */}
+                    <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2.5 transition-all duration-300 ${
+                      isPremium 
+                        ? 'bg-amber-500/10 border-amber-500/20 text-amber-300 shadow-[0_4px_12px_rgba(245,158,11,0.05)]' 
+                        : 'bg-zinc-950/60 border-zinc-850/80 text-zinc-300'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+                          isPremium ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20 animate-pulse' : 'bg-zinc-900 border border-zinc-800 text-zinc-400'
+                        }`}>
+                          {isPremium ? '👑' : '🆓'}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-extrabold font-sans leading-none uppercase tracking-wider">
+                              {isPremium ? 'Assinatura Premium PRO' : 'Versão Freemium'}
+                            </span>
+                            {!isPremium && (
+                              <span className="text-[7.5px] bg-red-500/20 text-red-400 font-mono px-1 py-0.2 rounded font-bold uppercase shrink-0">
+                                Com Ads
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[8px] text-zinc-400 leading-none mt-1 truncate">
+                            {isPremium 
+                              ? 'Acesso irrestrito • Sem anúncios' 
+                              : 'Treino sequencial • Ads no descanso'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={togglePremium}
+                        className={`text-[8px] font-extrabold px-2 py-1 rounded-md transition-all active:scale-95 flex items-center gap-1 uppercase tracking-wider shrink-0 cursor-pointer ${
+                          isPremium 
+                            ? 'bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-750' 
+                            : 'bg-amber-500 hover:bg-amber-400 text-zinc-950 shadow-md shadow-amber-500/25'
+                        }`}
+                      >
+                        {isPremium ? 'Virar Free' : 'Ser PRO 👑'}
+                      </button>
+                    </div>
+
                     {/* Simulated Today Selector Widget */}
                     <div className="bg-zinc-950/90 border border-zinc-850 rounded-xl p-2.5 flex items-center justify-between gap-2.5 shadow-inner">
                       <div className="flex items-center gap-1.5">
@@ -1402,10 +1771,14 @@ export default function MobileSimulator() {
                       </div>
 
                       {timerCompleted && (
-                        <div className="absolute inset-0 bg-green-950/90 border border-green-500/30 flex items-center justify-center gap-2 animate-pulse">
+                        <div 
+                          onClick={() => setTimerCompleted(false)}
+                          className="absolute inset-0 bg-green-950/90 border border-green-500/30 flex items-center justify-center gap-2 animate-pulse cursor-pointer hover:bg-green-900/90 transition-colors z-10"
+                          title="Clique para dispensar"
+                        >
                           <Check className="text-green-400" size={16} />
                           <span className="text-xs font-bold text-green-400 font-sans tracking-wide">
-                            FIM DO DESCANSO! VAI!
+                            FIM DO DESCANSO! VAI! (Clique p/ Fechar)
                           </span>
                         </div>
                       )}
@@ -1507,10 +1880,90 @@ export default function MobileSimulator() {
                           Grupo: {activeWorkout.muscleGroup}
                         </h3>
 
+                        {/* Freemium Progress Stepper */}
+                        {!isPremium && (
+                          <div className="bg-zinc-950/40 border border-zinc-850 p-2.5 rounded-xl space-y-1.5 animate-in fade-in duration-200">
+                            <div className="flex justify-between items-center text-[9px] font-mono">
+                              <span className="text-zinc-400 font-bold uppercase tracking-wider">Progresso do Treino</span>
+                              <span className="text-orange-400 font-extrabold">{activeExerciseIndex} de {activeWorkout.exercises.length} concluído</span>
+                            </div>
+                            <div className="flex gap-1">
+                              {activeWorkout.exercises.map((_, i) => (
+                                <div
+                                  key={i}
+                                  className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                                    i < activeExerciseIndex
+                                      ? 'bg-emerald-500 shadow-sm shadow-emerald-500/20'
+                                      : i === activeExerciseIndex
+                                      ? 'bg-orange-500 animate-pulse'
+                                      : 'bg-zinc-800'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {activeWorkout.exercises.length > 0 && !isPremium && activeExerciseIndex >= activeWorkout.exercises.length && (
+                          <div className="p-6 text-center bg-zinc-950/60 border border-green-900/40 rounded-2xl space-y-3 animate-in zoom-in-95 duration-200">
+                            <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-xl border border-emerald-500/30 animate-bounce">
+                              🏆
+                            </div>
+                            <div className="space-y-1">
+                              <h4 className="text-sm font-bold text-white font-sans">Treino de Hoje Concluído!</h4>
+                              <p className="text-[10px] text-zinc-400 font-sans leading-relaxed">
+                                Você executou todas as séries com dedicação. O descanso e nutrição agora são fundamentais para os seus resultados.
+                              </p>
+                            </div>
+                            <div className="pt-2">
+                              <button
+                                onClick={() => {
+                                  setActiveExerciseIndex(0);
+                                  setCheckedExercises({});
+                                }}
+                                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-[10px] font-bold rounded-xl transition-all active:scale-95 cursor-pointer"
+                              >
+                                🔄 Refazer Treino
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
                         {activeWorkout.exercises.map((ex, idx) => {
                           const dayStatus = getDayStatus(activeWorkout.dayName);
+
+                          // If Freemium: show past exercises as small completed chips, and future ones as locked placeholders
+                          if (!isPremium) {
+                            if (idx < activeExerciseIndex) {
+                              return (
+                                <div key={ex.id} className="p-2.5 bg-zinc-950/40 border border-zinc-900/60 rounded-xl flex items-center justify-between opacity-50 animate-in fade-in duration-150">
+                                  <span className="text-[10px] text-zinc-500 line-through font-medium">{idx + 1}. {ex.name}</span>
+                                  <span className="text-[8px] bg-emerald-950/50 text-emerald-400 border border-emerald-900/40 px-1.5 py-0.5 rounded font-mono font-bold uppercase">Concluído ✅</span>
+                                </div>
+                              );
+                            }
+                            if (idx > activeExerciseIndex) {
+                              return (
+                                <div key={ex.id} className="p-3 bg-zinc-950/20 border border-zinc-900 rounded-2xl flex items-center justify-between opacity-60 animate-in fade-in duration-150">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-lg bg-zinc-900 border border-zinc-850 flex items-center justify-center text-xs text-zinc-650">
+                                      🔒
+                                    </div>
+                                    <div>
+                                      <span className="text-[10.5px] font-bold text-zinc-600 font-sans block">{idx + 1}. {ex.name}</span>
+                                      <span className="text-[8px] text-zinc-700 font-mono block mt-0.5">{ex.series}</span>
+                                    </div>
+                                  </div>
+                                  <span className="text-[7.5px] font-bold font-mono uppercase tracking-wider text-zinc-700 bg-zinc-900/40 px-2 py-1 rounded border border-zinc-850">
+                                    Bloqueado
+                                  </span>
+                                </div>
+                              );
+                            }
+                          }
+
                           const isChecked = dayStatus === 'passado' ? true : checkedExercises[ex.id];
-                          const isExpanded = expandedExerciseId === ex.id;
+                          const isExpanded = !isPremium ? true : expandedExerciseId === ex.id; // Auto-expand active for Freemium
                           const isEditing = editingExerciseId === ex.id;
 
                           if (isEditing) {
@@ -1677,12 +2130,48 @@ export default function MobileSimulator() {
                                           <Sliders size={9} /> Editar
                                         </button>
                                       </div>
-                                      <button
-                                        onClick={() => startTimer(ex.rest)}
-                                        className="text-[9px] font-bold text-white bg-zinc-850 hover:bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-700 flex items-center gap-1 transition-colors"
-                                      >
-                                        <Play size={8} fill="currentColor" /> Descanso {ex.rest}s
-                                      </button>
+                                      {isPremium ? (
+                                        <button
+                                          onClick={() => {
+                                            toggleExerciseCheck(ex.id);
+                                            startTimer(ex.rest);
+                                          }}
+                                          className="text-[9px] font-bold text-white bg-zinc-850 hover:bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-700 flex items-center gap-1 transition-colors cursor-pointer"
+                                        >
+                                          <Play size={8} fill="currentColor" /> Descanso {ex.rest}s
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => {
+                                            // Check the exercise
+                                            toggleExerciseCheck(ex.id);
+                                            
+                                            if (activeExerciseIndex === activeWorkout.exercises.length - 1) {
+                                              // Last exercise!
+                                              setToastMessage("🏆 Parabéns! Você concluiu todo o treino de hoje!");
+                                              // Show a final celebratory ad with 5s skip
+                                              const nextAdIdx = (activeExerciseIndex) % SIMULATED_ADS.length;
+                                              setCurrentAdIndex(nextAdIdx);
+                                              setSkipAdSeconds(5);
+                                              setIsShowingAd(true);
+                                              prepareTimer(30); // 30 seconds celebratory rest (prepared, starts after ad)
+                                            } else {
+                                              const nextAdIdx = (activeExerciseIndex) % SIMULATED_ADS.length;
+                                              setCurrentAdIndex(nextAdIdx);
+                                              setSkipAdSeconds(5);
+                                              setIsShowingAd(true);
+                                              prepareTimer(ex.rest); // Prepare rest timer, but don't start it yet!
+                                            }
+                                          }}
+                                          className="text-[9.5px] font-extrabold text-white bg-orange-600 hover:bg-orange-500 px-3 py-1.5 rounded-lg border border-orange-500 flex items-center gap-1.5 shadow-md shadow-orange-950/25 transition-all active:scale-95 cursor-pointer animate-pulse"
+                                        >
+                                          {activeExerciseIndex === activeWorkout.exercises.length - 1 ? (
+                                            <>🏆 Finalizar Treino!</>
+                                          ) : (
+                                            <><Play size={8} fill="currentColor" /> Concluir & Descanso {ex.rest}s</>
+                                          )}
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
                                 ) : (
