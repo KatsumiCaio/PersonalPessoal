@@ -1,0 +1,6 @@
+{
+  "name": "PersonalPessoal",
+  "description": "Plataforma de treino e alimentação com simulador interativo, assistente NutriAI com inteligência artificial, esquema SQL e guias de inicialização.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
