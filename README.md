@@ -12,16 +12,6 @@ O **PersonalPessoal** é um ecossistema desenvolvido para democratizar o acesso 
 
 ---
 
-## 📸 Mockups e Visual do Projeto
-
-*(Insira aqui os prints ou mockups do seu aplicativo rodando)*
-
-| 📱 Simulador de Treino & Dieta | 🤖 Assistente Virtual NutriAI |
-| :---: | :---: |
-| ![Simulador de Treino](https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=500&q=80) | ![NutriAI Assistant](https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=500&q=80) |
-
----
-
 ## ✨ Funcionalidades Principais
 
 ### 1. 🤖 NutriAI: Inteligência Artificial Nutricional
