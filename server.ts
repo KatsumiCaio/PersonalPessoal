@@ -15,7 +15,7 @@ async function startServer() {
   // API Route for Gemini Chat
   app.post("/api/nutrition/chat", async (req, res) => {
     try {
-      const { message, history } = req.body;
+      const { message, history, userProfile } = req.body;
       
       if (!process.env.GEMINI_API_KEY) {
         return res.status(500).json({ 
@@ -60,7 +60,7 @@ async function startServer() {
       ];
 
       let response;
-      const systemInstruction = `Você é o NutriAI, um assistente virtual especialista em nutrição esportiva e alimentação de baixo custo.
+      const baseSystemInstruction = `Você é o NutriAI, um assistente virtual especialista em nutrição esportiva e alimentação de baixo custo.
 Seu objetivo é ajudar praticantes de musculação e atletas amadores a otimizarem sua dieta gastando pouco.
 Você deve responder dúvidas sobre:
 1. Substituição de alimentos caros por equivalentes saudáveis e baratos (ex: peito de frango por ovos inteiros ou proteína de soja PTS; patinho moído por sardinha; batata doce por mandioca; arroz integral por arroz branco enriquecido com casca de abóbora). Referencie o banco de dados de substitutos econômicos do aplicativo sempre que aplicável.
@@ -73,6 +73,24 @@ Instruções importantes:
 - Dê dicas financeiras práticas (como comprar a granel, em feiras livres, mercados atacadistas, preparar em casa).
 - Escreva de forma estilizada e empática, em Português do Brasil.
 - Use markdown (negritos, listas e tabelas) para deixar as informações fáceis de ler no visor pequeno de um smartphone simulado.`;
+
+      let profileContext = "";
+      if (userProfile) {
+        profileContext = `\n\nInformações do usuário atual recebidas do aplicativo:
+- Objetivo principal: ${userProfile.objective === 'ganhar_massa' ? 'Ganhar Massa Muscular / Hipertrofia' : userProfile.objective === 'emagrecer' ? 'Emagrecer / Déficit Calórico' : userProfile.objective === 'ganhar_forca' ? 'Ganhar Força Muscular' : userProfile.objective === 'definicao' ? 'Definição Muscular' : 'Saúde e Longevidade'}
+- Sexo Biológico: ${userProfile.gender || 'Não especificado'}
+- Peso atual: ${userProfile.weight} kg
+- Altura: ${userProfile.height ? userProfile.height + ' cm' : 'Não especificada'}
+- Meta de peso: ${userProfile.desiredWeight ? userProfile.desiredWeight + ' kg' : 'Não especificada'}
+- Frequência de treino recomendada: ${userProfile.daysPerWeek} dias/semana
+- Local de treino: ${userProfile.location === 'academia_media' ? 'Academia' : 'Em Casa / Calistenia'}
+- Nível de experiência: ${userProfile.experienceLevel || 'Não especificado'}
+- Limitações médicas: ${userProfile.healthLimitations ? userProfile.healthLimitations.join(', ') : 'Nenhuma'}
+
+Ajuste seu tom e suas sugestões alimentares e calóricas ESPECIFICAMENTE de acordo com os dados desse usuário acima. Trate-o de forma ultra-personalizada, lembrando sempre de manter o foco em baixo custo financeiro.`;
+      }
+
+      const systemInstruction = baseSystemInstruction + profileContext;
 
       const modelsToTry = [
         "gemini-3.5-flash",

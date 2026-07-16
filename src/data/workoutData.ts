@@ -6,30 +6,30 @@ const EXERCISE_POOL = {
     push: [
       {
         id: 'ac_push_1',
-        name: 'Supino Reto com Barra',
+        name: 'Supino Reto com Barra (Pegada Média)',
         series: '4 séries x 10 repetições',
         rest: 90,
         animationType: 'push' as const,
-        description: 'Deitado no banco reto, empurre a barra estendendo os cotovelos sem tirar as escápulas do banco.',
-        tips: 'Mantenha os calcanhares firmes no chão e contraia o abdômen para estabilidade.'
+        description: 'Deitado no banco plano, empurre a barra estendendo os cotovelos de forma controlada a partir do peito.',
+        tips: 'Mantenha os cotovelos a 45 graus e apoie firmemente os pés no chão.'
       },
       {
         id: 'ac_push_2',
-        name: 'Desenvolvimento com Halteres',
+        name: 'Desenvolvimento de Ombros com Barra',
         series: '4 séries x 12 repetições',
         rest: 75,
         animationType: 'push' as const,
-        description: 'Sentado com apoio nas costas, empurre os halteres acima da cabeça até quase estender os braços.',
-        tips: 'Não curve excessivamente a lombar ao erguer o peso.'
+        description: 'A partir do peito, empurre a barra verticalmente acima da cabeça até estender os cotovelos.',
+        tips: 'Ative o abdômen para manter a coluna estável e evitar a hiperextensão da lombar.'
       },
       {
         id: 'ac_push_3',
-        name: 'Tríceps Polia com Corda',
+        name: 'Tríceps Overhead com Corda na Polia',
         series: '3 séries x 12 repetições',
         rest: 60,
         animationType: 'push' as const,
-        description: 'Segurando a corda, estenda completamente os cotovelos para baixo, abrindo as pontas da corda no final.',
-        tips: 'Mantenha os cotovelos colados ao corpo o tempo todo.'
+        description: 'De costas para a polia, segure a corda acima da cabeça e estenda os cotovelos para a frente e para cima.',
+        tips: 'Mantenha os braços estáticos ao lado das orelhas flexionando apenas os antebraços.'
       },
       {
         id: 'ac_push_4',
@@ -37,44 +37,44 @@ const EXERCISE_POOL = {
         series: '3 séries x 15 repetições',
         rest: 60,
         animationType: 'push' as const,
-        description: 'Aproxime as mãos à frente do peito em um arco, mantendo uma leve flexão de cotovelo.',
-        tips: 'Aperte o peitoral por 1 segundo no ponto máximo de contração.'
+        description: 'De pé entre as polias altas, traga os braços para a frente e para baixo em um movimento arqueado cruzando as mãos.',
+        tips: 'Foque no esmagamento do peitoral no ponto máximo do movimento.'
       },
       {
         id: 'ac_push_5',
-        name: 'Supino Inclinado com Halteres',
+        name: 'Supino Inclinado com Barra',
         series: '4 séries x 10 repetições',
         rest: 90,
         animationType: 'push' as const,
-        description: 'No banco inclinado a 30 graus, empurre os halteres para cima de forma coordenada.',
-        tips: 'Foque na parte superior do peito para ombros preenchidos.'
+        description: 'No banco inclinado, empurre a barra para cima focando na porção superior do peito.',
+        tips: 'Controle a descida da barra até quase tocar a parte superior do peito.'
       },
       {
         id: 'ac_push_6',
-        name: 'Tríceps Testa com Barra W',
+        name: 'Tríceps Testa deitado na Polia',
         series: '3 séries x 12 repetições',
         rest: 60,
         animationType: 'push' as const,
-        description: 'Deitado no banco, desça a barra em direção à testa flexionando apenas os cotovelos.',
-        tips: 'Mantenha os cotovelos apontados para o teto e perfeitamente paralelos.'
+        description: 'Deitado sob a polia, segure a barra reta e flexione apenas os cotovelos descendo o peso em direção à testa.',
+        tips: 'Mantenha os cotovelos paralelos e fixos durante toda a execução.'
       },
       {
         id: 'ac_push_7',
-        name: 'Elevação Lateral com Halteres',
+        name: 'Elevação Lateral Sentado na Polia',
         series: '4 séries x 15 repetições',
         rest: 60,
         animationType: 'push' as const,
-        description: 'Em pé, erga os braços lateralmente até a altura dos ombros, cotovelos semi-flexionados.',
-        tips: 'Conduza o movimento com os cotovelos, mantendo os trapézios relaxados.'
+        description: 'Sentado na polia baixa, eleve o cabo lateralmente focando na cabeça lateral do deltoide.',
+        tips: 'Mantenha a postura reta e levante liderando o movimento através do cotovelo.'
       },
       {
         id: 'ac_push_8',
-        name: 'Crucifixo Inclinado com Halteres',
+        name: 'Crucifixo Declinado com Halteres',
         series: '3 séries x 12 repetições',
         rest: 75,
         animationType: 'push' as const,
-        description: 'No banco inclinado, abra os braços segurando os halteres em movimento de arco até alongar o peitoral.',
-        tips: 'Mantenha uma flexão constante e leve nos cotovelos para poupar a articulação.'
+        description: 'No banco declinado, abra os halteres lateralmente alongando o peitoral inferior com segurança.',
+        tips: 'Mantenha uma leve flexão nos cotovelos para preservar as articulações.'
       },
       {
         id: 'ac_push_9',
@@ -82,304 +82,313 @@ const EXERCISE_POOL = {
         series: '3 séries x 10 repetições',
         rest: 75,
         animationType: 'push' as const,
-        description: 'Desenvolvimento de ombros iniciando com rotação de punho de dentro para fora na subida.',
-        tips: 'Excelente exercício completo para deltoide anterior e lateral.'
+        description: 'Segure os halteres na frente do peito e empurre-os rotacionando os punhos para fora conforme sobe.',
+        tips: 'Trabalha todas as porções do ombro de maneira altamente completa.'
       },
       {
         id: 'ac_push_10',
-        name: 'Tríceps Francês Unilateral na Polia',
+        name: 'Tríceps Unilateral na Polia',
         series: '3 séries x 12 repetições',
         rest: 60,
         animationType: 'push' as const,
-        description: 'De costas para a polia, segure o puxador acima da cabeça e estenda o braço para o teto.',
-        tips: 'Mantém o bíceps colado na orelha para isolar a porção longa do tríceps.'
+        description: 'Puxe o cabo estendendo o braço totalmente para baixo de forma isolada focando no tríceps.',
+        tips: 'Mantenha o cotovelo colado ao tronco, focando apenas na extensão do braço.'
       },
       {
         id: 'ac_push_11',
-        name: 'Elevação Frontal com Halteres (Pegada Neutra)',
+        name: 'Supino com Pegada Fechada (Close-Grip)',
         series: '3 séries x 12 repetições',
         rest: 60,
         animationType: 'push' as const,
-        description: 'Erga os halteres à frente alternadamente até a linha dos olhos, com pegada de martelo.',
-        tips: 'Foco na porção anterior do deltoide.'
+        description: 'Deitado no banco reto, empurre a barra segurando-a com as mãos separadas na largura dos ombros.',
+        tips: 'Excelente exercício composto com ênfase no tríceps e peitoral interno.'
       }
     ],
     pull: [
       {
         id: 'ac_pull_1',
-        name: 'Puxada Aberta no Pulley',
+        name: 'Puxada Frontal com Pegada Fechada',
         series: '4 séries x 10 repetições',
         rest: 90,
         animationType: 'pull' as const,
-        description: 'Incline o tronco levemente para trás e puxe a barra em direção à clavícula conduzindo com os cotovelos.',
-        tips: 'Pense em puxar com as costas, e não apenas puxar com a força dos braços.'
+        description: 'No pulley, puxe a barra curta ou triângulo verticalmente até a altura do peito, inclinando-se levemente para trás.',
+        tips: 'Sinta a contração das dorsais, liderando a puxada através dos cotovelos.'
       },
       {
         id: 'ac_pull_2',
-        name: 'Remada Baixa Sentado (Triângulo)',
+        name: 'Remada Curvada com Barra',
         series: '4 séries x 12 repetições',
         rest: 75,
         animationType: 'pull' as const,
-        description: 'Segure o puxador triângulo, puxe-o até o abdômen contraindo intensamente as escápulas.',
-        tips: 'Mantenha a postura perfeitamente ereta e evite balançar demais o tronco.'
+        description: 'Inclinado para a frente, puxe a barra na direção da cintura mantendo a coluna reta e firme.',
+        tips: 'Esprema as costas no topo mantendo os cotovelos próximos ao corpo.'
       },
       {
         id: 'ac_pull_3',
-        name: 'Rosca Alternada com Halteres',
+        name: 'Rosca Alternada Inclinada com Halteres',
         series: '3 séries x 10 repetições',
         rest: 60,
         animationType: 'pull' as const,
-        description: 'Eleve o halter flexionando o cotovelo e gire o punho para fora (supinação) na subida.',
-        tips: 'Evite usar o impulso dos ombros ou balançar as costas para roubar.'
+        description: 'Sentado em banco inclinado, faça a flexão alternada dos cotovelos girando a palma da mão para cima.',
+        tips: 'A inclinação coloca o bíceps em uma posição de alongamento máximo excelente.'
       },
       {
         id: 'ac_pull_4',
-        name: 'Remada Curvada com Barra (Pegada Pronada)',
+        name: 'Remada Curvada com Dois Halteres',
         series: '4 séries x 10 repetições',
         rest: 90,
         animationType: 'pull' as const,
-        description: 'Inclinado para a frente com a coluna ereta, puxe a barra em direção ao umbigo espremendo as costas.',
-        tips: 'Estabilize bem a lombar flexionando levemente os joelhos.'
+        description: 'Com o tronco inclinado à frente, puxe os dois halteres simultaneamente rente ao corpo.',
+        tips: 'Excelente estabilidade para trabalhar o miolo das costas e deltoides posteriores.'
       },
       {
         id: 'ac_pull_5',
-        name: 'Puxada Fechada com Triângulo',
-        series: '3 séries x 12 repetições',
-        rest: 75,
+        name: 'Barra Fixa com Pegada Supinada (Chin-Up)',
+        series: '3 séries x Máximo de repetições',
+        rest: 90,
         animationType: 'pull' as const,
-        description: 'No pulley com o puxador triângulo, puxe em direção ao peitoral inferior trazendo os cotovelos rente ao corpo.',
-        tips: 'Sinta alongar bem as costas na subida controlada.'
+        description: 'Segure na barra com pegada supinada (palmas para você) e puxe-se até o queixo passar da barra.',
+        tips: 'Foco excepcional nas dorsais e grande recrutamento de força nos bíceps.'
       },
       {
         id: 'ac_pull_6',
-        name: 'Rosca Concentrada Unilateral',
+        name: 'Rosca Concentrada',
         series: '3 séries x 12 repetições',
         rest: 60,
         animationType: 'pull' as const,
-        description: 'Sentado, apoie o cotovelo na parte interna da coxa e flexione o braço trazendo o halter de forma isolada.',
-        tips: 'Foco exclusivo na contração máxima (pico de contração) do bíceps.'
+        description: 'Sentado, apoie o cotovelo na parte interna da coxa e flexione o antebraço erguendo o halter de forma isolada.',
+        tips: 'Excelente isolador que foca no pico de contração máxima do bíceps.'
       },
       {
         id: 'ac_pull_7',
-        name: 'Crucifixo Invertido com Halteres (Posterior de Ombros)',
+        name: 'Crucifixo Invertido na Polia',
         series: '4 séries x 15 repetições',
         rest: 60,
         animationType: 'pull' as const,
-        description: 'Incline o tronco para frente a 45 graus e abra os halteres lateralmente focando na parte traseira dos ombros.',
-        tips: 'Mantenha as escápulas abertas no início e feche no final do movimento.'
+        description: 'Em pé de frente para a polia alta, puxe os cabos cruzando os braços para trás para isolar o posterior de ombro.',
+        tips: 'Mantenha os cotovelos alinhados horizontalmente para focar inteiramente nos ombros.'
       },
       {
         id: 'ac_pull_8',
-        name: 'Remada Cavalinho na Máquina ou Barra T',
+        name: 'Remada para Deltóide Posterior com Corda na Polia',
         series: '4 séries x 10 repetições',
         rest: 90,
         animationType: 'pull' as const,
-        description: 'Segurando a barra T, puxe em direção ao peito com o tronco inclinado, contraindo as costas.',
-        tips: 'Excelente construtor de espessura de costas.'
+        description: 'Segure as pontas da corda e puxe-as na direção do rosto abrindo bem os cotovelos ao final.',
+        tips: 'Excelente construtor de força e estabilidade na musculatura do manguito e posterior de ombro.'
       },
       {
         id: 'ac_pull_9',
-        name: 'Rosca Martelo com Halteres',
+        name: 'Rosca Martelo Alternada com Halteres',
         series: '3 séries x 12 repetições',
         rest: 60,
         animationType: 'pull' as const,
-        description: 'Eleve os halteres paralelamente com a pegada neutra (palmas viradas uma para a outra).',
-        tips: 'Excelente exercício para braquiorradial (antebraço) e braquial.'
+        description: 'Erga os halteres alternadamente mantendo as palmas das mãos voltadas para dentro (neutra).',
+        tips: 'Excelente exercício para trabalhar o antebraço, braquial e braquiorradial.'
       },
       {
         id: 'ac_pull_10',
-        name: 'Encolhimento com Halteres (Trapézio)',
+        name: 'Encolhimento de Ombros com Barra',
         series: '3 séries x 15 repetições',
         rest: 60,
         animationType: 'pull' as const,
-        description: 'Em pé, segurando halteres pesados, eleve os ombros em direção às orelhas e sustente por 1s.',
-        tips: 'Não faça movimentos circulares com os ombros para proteger as articulações.'
+        description: 'Segure a barra à frente do corpo e encolha os ombros verticalmente para cima em direção às orelhas.',
+        tips: 'Não gire os ombros; suba-os em linha reta para contrair perfeitamente o trapézio.'
       }
     ],
     legs: [
       {
         id: 'ac_legs_1',
-        name: 'Leg Press 45º Tradicional',
-        series: '4 séries x 12 repetições',
+        name: 'Panturrilha no Leg Press',
+        series: '4 séries x 10 repetições',
         rest: 90,
         animationType: 'legs' as const,
-        description: 'Apoie os pés na plataforma na largura dos ombros, destrave o aparelho e dobre os joelhos até 90 graus.',
-        tips: 'Nunca estenda totalmente os joelhos no topo do movimento para proteger a patela.'
+        description: 'Apoie apenas a ponta dos pés na parte inferior da plataforma do Leg Press e estenda as panturrilhas.',
+        tips: 'Aproveite a amplitude do aparelho para alongar e contrair bem as panturrilhas.'
       },
       {
         id: 'ac_legs_2',
-        name: 'Cadeira Extensora (Quadríceps)',
+        name: 'Extensão de Panturrilha (Calf Press)',
         series: '4 séries x 12 repetições',
         rest: 60,
         animationType: 'legs' as const,
-        description: 'Sentado no aparelho, estenda os joelhos sustentando o peso por 1 segundo no topo de forma isométrica.',
-        tips: 'Mantenha o quadril bem colado no banco usando as travas laterais.'
+        description: 'Execute a extensão completa do tornozelo na máquina de panturrilha/prensa para membros inferiores.',
+        tips: 'Cadencie o movimento segurando a contração no topo e controlando a descida.'
       },
       {
         id: 'ac_legs_3',
-        name: 'Mesa Flexora (Posteriores de Coxa)',
-        series: '3 séries x 12 repetições',
+        name: 'Flexão de Pernas na Bola Suíça (Ball Leg Curl)',
+        series: '4 séries x 12 repetições',
         rest: 60,
         animationType: 'legs' as const,
-        description: 'Deitado de bruços, flexione as pernas trazendo o rolo até a linha dos glúteos e controle a volta.',
-        tips: 'Controle o movimento de retorno (fase excêntrica) de forma lenta e cadenciada.'
+        description: 'Deitado, com os pés apoiados na bola, eleve o quadril e flexione as pernas trazendo a bola rumo aos glúteos.',
+        tips: 'Mantém o abdômen e glúteos sob altíssima tensão estabilizadora de cadeia posterior.'
       },
       {
         id: 'ac_legs_4',
-        name: 'Panturrilha Gêmeos Sentado',
+        name: 'Elevação de Panturrilha Sentado com Barra',
         series: '4 séries x 20 repetições',
         rest: 45,
         animationType: 'legs' as const,
-        description: 'Apoie as pontas dos pés na plataforma da máquina e realize a flexão plantar máxima para panturrilhas densas.',
-        tips: 'Alongue completamente na descida e segure 1 segundo no topo com contração máxima.'
+        description: 'Sentado, apoie a barra acolchoada sobre as coxas e eleve os calcanhares contraindo os sóleos.',
+        tips: 'Use um calço sob os pés para obter uma excelente amplitude de alongamento.'
       },
       {
         id: 'ac_legs_5',
-        name: 'Agachamento Guiado (Smith Machine)',
+        name: 'Agachamento Livre com Barra',
         series: '4 séries x 10 repetições',
         rest: 90,
         animationType: 'legs' as const,
-        description: 'Sob a barra guiada, posicione os pés levemente à frente e agache de forma coordenada mantendo a coluna ereta.',
-        tips: 'Mantenha os joelhos alinhados com a ponta dos pés para evitar lesões.'
+        description: 'Com a barra apoiada nos trapézios, execute o agachamento flexionando joelhos e quadril com estabilidade.',
+        tips: 'Mantenha a coluna neutra e empurre os joelhos ligeiramente para fora na descida.'
       },
       {
         id: 'ac_legs_6',
-        name: 'Cadeira Flexora Sentado',
-        series: '3 séries x 12 repetições',
-        rest: 60,
+        name: 'Cadeira Adutora',
+        series: '3 séries x 15 repetições',
+        rest: 45,
         animationType: 'legs' as const,
-        description: 'Sentado, empurre o rolo de apoio para baixo flexionando os joelhos para contrair os isquiotibiais.',
-        tips: 'Mantenha as costas totalmente apoiadas no encosto para maior torque.'
+        description: 'Sentado na máquina adutora, realize o fechamento das pernas contraindo a parte interna das coxas.',
+        tips: 'Não use impulsos rápidos e sinta a musculatura adutora trabalhar de forma isolada.'
       },
       {
         id: 'ac_legs_7',
-        name: 'Agachamento Livre com Barra Olímpica',
+        name: 'Agachamento Completo com Barra (Full Squat)',
         series: '4 séries x 8 repetições',
         rest: 120,
         animationType: 'legs' as const,
-        description: 'Apoie a barra no trapézio, afaste os pés e agache empurrando os quadris para trás.',
-        tips: 'Exercício rei dos membros inferiores. Contraia muito o core durante a subida.'
+        description: 'Agache profundamente ultrapassando a paralela dos 90 graus com controle e força abdominal.',
+        tips: 'Excelente recrutamento de glúteos e pernas de forma integral para quem possui boa mobilidade.'
       },
       {
         id: 'ac_legs_8',
-        name: 'Stiff com Halteres (Foco Isquiotibiais & Glúteo)',
+        name: 'Levantamento Terra com Barra (Deadlift)',
         series: '4 séries x 10 repetições',
-        rest: 75,
+        rest: 90,
         animationType: 'legs' as const,
-        description: 'Em pé, desça os halteres rente às pernas, flexionando apenas os quadris e mantendo a coluna alinhada.',
-        tips: 'Mantenha os joelhos quase esticados (semi-flexão rígida) para alongar ao máximo o posterior.'
+        description: 'A partir do chão, levante a barra até ficar em pé erguendo com as pernas, glúteos e eretores da espinha.',
+        tips: 'Exercício composto fantástico de potência. Mantenha a barra colada às pernas na subida.'
       },
       {
         id: 'ac_legs_9',
-        name: 'Afundo com Halteres (Passada Estática)',
-        series: '3 séries x 12 repetições (cada perna)',
+        name: 'Afundo Estático com Barra nos Ombros',
+        series: '3 séries x 12 repetições',
         rest: 75,
         animationType: 'legs' as const,
-        description: 'Com um halter em cada mão, posicione um pé à frente e o outro atrás, agachando verticalmente.',
-        tips: 'O joelho de trás deve quase tocar o solo para amplitude excelente.'
+        description: 'Dê um passo à frente com a barra nos ombros e flexione as pernas verticalmente formando 90 graus.',
+        tips: 'Excelente trabalho unilateral para corrigir assimetrias de pernas e glúteos.'
       },
       {
         id: 'ac_legs_10',
-        name: 'Cadeira Abdutora (Glúteo Médio)',
-        series: '3 séries x 15 repetições',
-        rest: 45,
+        name: 'Passada Caminhando com Barra',
+        series: '3 séries x 20 passos totais',
+        rest: 75,
         animationType: 'legs' as const,
-        description: 'Sentado na máquina, empurre os apoios para fora afastando as pernas e contraindo as laterais do glúteo.',
-        tips: 'Incline levemente o tronco para a frente para isolar mais os glúteos.'
+        description: 'Execute afundos caminhando de forma coordenada, flexionando uma perna de cada vez.',
+        tips: 'Trabalho excepcional de estabilidade, equilíbrio e potência unilateral.'
       },
       {
         id: 'ac_legs_11',
-        name: 'Cadeira Adutora (Parte Interna da Coxa)',
-        series: '3 séries x 15 repetições',
+        name: 'Subida no Banco com Barra nos Ombros',
+        series: '3 séries x 12 repetições',
+        rest: 75,
+        animationType: 'legs' as const,
+        description: 'Com a barra apoiada nos ombros, suba em uma plataforma sólida e firme empurrando o corpo para cima.',
+        tips: 'A perna que está no banco deve realizar todo o trabalho mecânico de subida.'
+      },
+      {
+        id: 'ac_legs_12',
+        name: 'Prensa de Panturrilha de Pé',
+        series: '4 séries x 15 repetições',
         rest: 45,
         animationType: 'legs' as const,
-        description: 'Feche as pernas contra a resistência da máquina, focando no adutor da coxa.',
-        tips: 'Controle o retorno devagar para evitar estalos.'
+        description: 'De pé, execute a extensão de tornozelos contraindo as panturrilhas de forma controlada.',
+        tips: 'Concentre-se em empurrar com a base do dedão para focar na musculatura interna.'
       }
     ],
     core: [
       {
         id: 'ac_core_1',
-        name: 'Abdominal Supra na Prancha Inclinada',
+        name: 'Abdominal na Máquina (Ab Crunch Machine)',
         series: '4 séries x 20 repetições',
         rest: 45,
         animationType: 'core' as const,
-        description: 'Prenda os pés no apoio e flexione o abdômen erguendo as costas em direção aos joelhos.',
-        tips: 'Expulse todo o ar dos pulmões no topo para contração máxima do reto abdominal.'
+        description: 'Sentado na máquina, contraia o reto abdominal trazendo o tronco para a frente de forma controlada.',
+        tips: 'Solte todo o ar na fase de contração máxima.'
       },
       {
         id: 'ac_core_2',
-        name: 'Prancha Abdominal Estática de Solo',
-        series: '4 séries x 45 segundos',
+        name: 'Abdominal com Rolo (Ab Roller)',
+        series: '4 séries x 12 repetições',
         rest: 45,
         animationType: 'core' as const,
-        description: 'Apoie os cotovelos e pontas dos pés mantendo o corpo reto e o core totalmente engajado.',
-        tips: 'Mantenha os glúteos e abdômen contraídos para poupar a região lombar.'
+        description: 'De joelhos, empurre o rolo de abdômen para a frente estendendo o tronco sem forçar a lombar.',
+        tips: 'Use o abdômen e glúteos contraídos para frear o movimento de descida.'
       },
       {
         id: 'ac_core_3',
-        name: 'Abdominal Infra na Paralela ou Solo',
+        name: 'Abdominal Reverso Declinado',
         series: '3 séries x 15 repetições',
         rest: 45,
         animationType: 'core' as const,
-        description: 'Eleve as pernas juntas mantendo o abdômen inferior sob tensão constante.',
-        tips: 'Tente levantar o quadril levemente no topo para maior ativação das fibras inferiores.'
+        description: 'No banco declinado, eleve as pernas trazendo o quadril levemente para cima para focar na porção inferior.',
+        tips: 'Não use balanço; faça o movimento apenas com a força abdominal.'
       },
       {
         id: 'ac_core_4',
-        name: 'Abdominal Oblíquo na Polia (Woodchopper)',
-        series: '3 séries x 15 repetições (cada lado)',
+        name: 'Abdominal Russo na Polia',
+        series: '3 séries x 15 rotações',
         rest: 45,
         animationType: 'core' as const,
-        description: 'Na polia média/alta, puxe o cabo em diagonal cruzando o corpo em rotação controlada de tronco.',
-        tips: 'Excelente para treinar o abdômen funcional e oblíquos.'
+        description: 'Com o cabo na horizontal, rotacione o tronco ativando os oblíquo laterais de forma controlada.',
+        tips: 'Estabilize as pernas e quadris mantendo-os voltados para a frente.'
       },
       {
         id: 'ac_core_5',
-        name: 'Prancha Lateral Estática',
-        series: '3 séries x 30 segundos (cada lado)',
+        name: 'Abdominal na Polia com Bola Bosu',
+        series: '3 séries x 15 repetições',
         rest: 45,
         animationType: 'core' as const,
-        description: 'Apoie-se em um cotovelo lateralmente, mantendo o quadril elevado e a coluna alinhada.',
-        tips: 'Não deixe o quadril ceder em direção ao solo.'
+        description: 'Deitado na bola Bosu segurando os puxadores da polia, execute o crunch alongando o abdômen.',
+        tips: 'Excelente para dar uma amplitude de alongamento maior ao reto abdominal.'
       }
     ],
     cardio: [
       {
         id: 'ac_cardio_1',
-        name: 'Esteira Intervalada HIIT',
-        series: '15 a 20 minutos (1 min corrida rápida / 1 min caminhada)',
+        name: 'Bicicleta Ergométrica (Stationary Bicycling)',
+        series: '20 minutos em ritmo constante',
         rest: 0,
         animationType: 'cardio' as const,
-        description: 'Alterne a velocidade para elevar e reduzir a frequência cardíaca ciclicamente acelerando o metabolismo.',
-        tips: 'Mantenha postura ereta e respiração profunda.'
+        description: 'Pedale de forma contínua, mantendo a frequência cardíaca ideal para oxigenação geral.',
+        tips: 'Ajuste a altura do selim para ficar confortável.'
       },
       {
         id: 'ac_cardio_2',
-        name: 'Bicicleta Ergométrica Recumbente ou Vertical',
-        series: '20 minutos em ritmo moderado',
+        name: 'Ciclismo Livre (Bicycling)',
+        series: '20 a 30 minutos em ritmo moderado',
         rest: 0,
         animationType: 'cardio' as const,
-        description: 'Pedale de forma constante, mantendo uma frequência moderada para saúde cardiovascular e queima calórica.',
-        tips: 'Ajuste a altura do banco para que o joelho fique apenas levemente flexionado no ponto mais baixo.'
+        description: 'Pedal ao ar livre ou simulador, excelente para condicionamento geral.',
+        tips: 'Mantenha giros constantes e respiração controlada.'
       },
       {
         id: 'ac_cardio_3',
-        name: 'Elíptico / Transport de Baixo Impacto',
-        series: '15 minutos intensidade constante',
-        rest: 0,
+        name: 'Salto Alternado na Caixa (Box Skip)',
+        series: '4 séries x 45 segundos ativos',
+        rest: 30,
         animationType: 'cardio' as const,
-        description: 'Exercício de baixo impacto nas articulações que trabalha membros superiores e inferiores sincronizadamente.',
-        tips: 'Mantenha o abdômen firme e empurre/puxe as manoplas ativamente.'
+        description: 'Salte na caixa com pernas alternadas de forma rápida, elevando as pulsações.',
+        tips: 'Ideal para treinar velocidade, força elástica e queima calórica rápida.'
       },
       {
         id: 'ac_cardio_4',
-        name: 'Escada Ergométrica (Climber)',
-        series: '10 minutos em ritmo constante',
-        rest: 0,
+        name: 'Corrida Lateral no Banco (Bench Sprint)',
+        series: '4 séries x 30 segundos ativos',
+        rest: 45,
         animationType: 'cardio' as const,
-        description: 'Suba os degraus da máquina simulando uma subida infinita de escadaria.',
-        tips: 'Incrível ativador de glúteos e altíssimo gasto calórico.'
+        description: 'Corra lateralmente sobre o banco de exercícios tocando os pés de forma ágil.',
+        tips: 'Excelente trabalho aeróbico e de agilidade.'
       }
     ]
   },
@@ -387,281 +396,416 @@ const EXERCISE_POOL = {
     push: [
       {
         id: 'ca_push_1',
-        name: 'Flexão de Braço (Push-Ups) Clássica',
+        name: 'Flexão Relógio (Clock Push-Up)',
         series: '4 séries x Repetições máximas',
-        rest: 90,
+        rest: 60,
         animationType: 'push' as const,
-        description: 'Deite de bruços, apoie as mãos além da largura dos ombros e empurre o corpo mantendo-o firme.',
-        tips: 'Caso esteja muito difícil, apoie os joelhos no chão de forma adaptada.'
+        description: 'A cada repetição, rotacione a posição das mãos em formato de círculo/relógio executando a flexão.',
+        tips: 'Recruta diferentes porções musculares e desenvolve estabilidade tridimensional de ombros.'
       },
       {
         id: 'ca_push_2',
-        name: 'Tríceps Banco (Dips)',
-        series: '4 séries x 12 a 15 repetições',
-        rest: 60,
-        animationType: 'push' as const,
-        description: 'Apoie as mãos na beirada de uma cadeira estável ou sofá, estenda as pernas à frente e flexione os cotovelos.',
-        tips: 'Mantenha as costas raspando bem próximo da borda na descida para isolar o tríceps.'
-      },
-      {
-        id: 'ca_push_3',
-        name: 'Flexão Declinada (Pés no Sofá)',
-        series: '3 séries x Repetições máximas',
-        rest: 90,
-        animationType: 'push' as const,
-        description: 'Coloque os pés em cima de um banco ou sofá e as mãos no chão para focar na parte superior do peito.',
-        tips: 'Cuidado para não relaxar o quadril caindo a lombar.'
-      },
-      {
-        id: 'ca_push_4',
-        name: 'Flexão Diamante (Foco em Tríceps)',
-        series: '3 séries x Repetições máximas',
-        rest: 60,
-        animationType: 'push' as const,
-        description: 'Aproxime as mãos no chão formando um losango com os polegares e indicadores.',
-        tips: 'Excelente ativador de tríceps e peitoral interno em casa.'
-      },
-      {
-        id: 'ca_push_5',
-        name: 'Flexão Inclinada (Mãos no Sofá)',
-        series: '3 séries x 12 repetições',
-        rest: 60,
-        animationType: 'push' as const,
-        description: 'Mãos apoiadas no sofá e pés no chão, empurre o corpo mantendo o alinhamento corporal.',
-        tips: 'Excelente variação leve para focar na porção inferior do peitoral.'
-      },
-      {
-        id: 'ca_push_6',
-        name: 'Desenvolvimento de Ombros (Garrafas de Água)',
+        name: 'Desenvolvimento Arnold com Halteres',
         series: '4 séries x 12 repetições',
         rest: 60,
         animationType: 'push' as const,
-        description: 'Sentado ou em pé, empurre garrafas ou galões de água acima da cabeça.',
-        tips: 'Mantenha os ombros para trás e a coluna ereta.'
+        description: 'A partir da linha do peitoral, empurre os halteres girando as palmas para fora no topo.',
+        tips: 'Ativação total dos ombros usando halteres no conforto de casa.'
+      },
+      {
+        id: 'ca_push_3',
+        name: 'Tríceps no Banco (Bench Dips)',
+        series: '4 séries x 12 repetições',
+        rest: 60,
+        animationType: 'push' as const,
+        description: 'Apoie as mãos na borda de um banco ou cadeira firme e desça o quadril flexionando os cotovelos.',
+        tips: 'Mantenha as costas rente à cadeira para focar a tensão puramente no tríceps.'
+      },
+      {
+        id: 'ca_push_4',
+        name: 'Crucifixo Declinado com Halteres',
+        series: '3 séries x 12 repetições',
+        rest: 60,
+        animationType: 'push' as const,
+        description: 'Deitado em leve declive, abra os braços lateralmente controlando a descida do peso para alongar o peitoral.',
+        tips: 'Ótima ativação da porção inferior do peitoral.'
+      },
+      {
+        id: 'ca_push_5',
+        name: 'Flexão Declinada (Pés Elevados)',
+        series: '3 séries x Repetições máximas',
+        rest: 60,
+        animationType: 'push' as const,
+        description: 'Apoie os pés em uma cadeira ou sofá e as mãos no chão para executar a flexão de braços.',
+        tips: 'Joga maior ênfase e carga na porção superior do peito e nos ombros anterior.'
+      },
+      {
+        id: 'ca_push_6',
+        name: 'Tríceps Testa Declinado com Halteres',
+        series: '3 séries x 12 repetições',
+        rest: 60,
+        animationType: 'push' as const,
+        description: 'Deitado com halteres em banco declinado, flexione apenas os cotovelos descendo os pesos ao lado da testa.',
+        tips: 'Garante excelente isolamento e amplitude do tríceps.'
       },
       {
         id: 'ca_push_7',
-        name: 'Elevação Lateral com Galão de Carga',
-        series: '3 séries x 15 repetições',
+        name: 'Elevação de Ombros Alternada (Frontal e Lateral)',
+        series: '4 séries x 15 repetições',
         rest: 60,
         animationType: 'push' as const,
-        description: 'Segure galões leves nas mãos e levante os braços lateralmente até a linha dos ombros.',
-        tips: 'Suba o peso controladamente sem usar balanço.'
+        description: 'Alterne uma repetição de elevação frontal com outra de elevação lateral de ombros com halteres.',
+        tips: 'Trabalha deltoides anteriores e laterais com altíssima eficiência e coordenação.'
       },
       {
         id: 'ca_push_8',
-        name: 'Flexão Pike (Foco Deltoide/Ombros)',
-        series: '3 séries x 8 a 10 repetições',
-        rest: 75,
+        name: 'Flexão Fechada com Apoio no Halter',
+        series: '3 séries x Repetições máximas',
+        rest: 60,
         animationType: 'push' as const,
-        description: 'Eleve o quadril formando um V invertido com o corpo e flexione os cotovelos trazendo a cabeça rumo ao solo.',
-        tips: 'Excelente substituto do desenvolvimento de ombros sem peso.'
+        description: 'Coloque as mãos próximas apoiadas sobre o corpo de um halter firme no chão e execute a flexão.',
+        tips: 'Tensão contínua absurda e isolamento excelente para peitoral interno e tríceps.'
+      },
+      {
+        id: 'ca_push_9',
+        name: 'Supino Fechado com Halteres',
+        series: '3 séries x 12 repetições',
+        rest: 60,
+        animationType: 'push' as const,
+        description: 'Deitado de costas, empurre os halteres colados um ao outro no meio do peitoral.',
+        tips: 'Trabalho excelente de compressão isométrica do peitoral e estímulo de tríceps.'
+      },
+      {
+        id: 'ca_push_10',
+        name: 'Desenvolvimento Arnold com Halteres',
+        series: '4 séries x 12 repetições',
+        rest: 60,
+        animationType: 'push' as const,
+        description: 'Empurre os halteres girando os punhos, garantindo excelente trabalho completo de deltoides.',
+        tips: 'Execute de forma lenta para controlar a estabilização com halteres.'
+      },
+      {
+        id: 'ca_push_11',
+        name: 'Elevação de Ombros Alternada (Frontal e Lateral)',
+        series: '3 séries x 12 repetições',
+        rest: 60,
+        animationType: 'push' as const,
+        description: 'Alterne movimentos frontais e laterais recrutando ombros de forma completa em casa.',
+        tips: 'Mantenha o corpo estável e não balance o quadril.'
+      },
+      {
+        id: 'ca_push_12',
+        name: 'Crucifixo Declinado com Halteres',
+        series: '3 séries x 15 repetições',
+        rest: 60,
+        animationType: 'push' as const,
+        description: 'No banco declinado, faça abertura lateral controlada com halteres alongando o peito.',
+        tips: 'Foque no esmagamento das fibras na subida.'
       }
     ],
     pull: [
       {
         id: 'ca_pull_1',
-        name: 'Puxada no Chão com Toalha',
+        name: 'Remada Curvada com Dois Halteres',
         series: '4 séries x 12 repetições',
         rest: 75,
         animationType: 'pull' as const,
-        description: 'Deitado de barriga para baixo, segure uma toalha esticada e puxe-a contra o peito contraindo as costas.',
-        tips: 'Faça força constante esticando a toalha para fora para ativar o dorsal (costas).'
+        description: 'Com o tronco inclinado, puxe os dois halteres simultaneamente na direção do abdômen.',
+        tips: 'Foque em espremer as escápulas juntas no topo de cada repetição.'
       },
       {
         id: 'ca_pull_2',
-        name: 'Remada Unilateral com Galão de Água',
-        series: '4 séries x 15 repetições',
+        name: 'Remada Curvada com Halteres (Pegada Neutra)',
+        series: '4 séries x 12 repetições',
         rest: 60,
         animationType: 'pull' as const,
-        description: 'Apoie um joelho e mão num sofá. Puxe um galão de água ou amaciante em direção ao quadril.',
-        tips: 'Suba espremendo a asa das costas, descendo de forma controlada.'
+        description: 'Com as palmas voltadas para dentro, puxe os dois halteres simulando a remada curvada.',
+        tips: 'A pegada neutra poupa os punhos e dá excelente ênfase nos dorsais e bíceps.'
       },
       {
         id: 'ca_pull_3',
-        name: 'Superman (Extensor Lombar)',
-        series: '3 séries x 15 repetições',
-        rest: 45,
-        animationType: 'pull' as const,
-        description: 'Deitado de bruços, erga as coxas e o peito simultaneamente do solo por 1 segundo e segure.',
-        tips: 'Não hiperestenda demais o pescoço, olhe sempre para o chão.'
-      },
-      {
-        id: 'ca_pull_4',
-        name: 'Rosca Direta Unilateral com Galão',
+        name: 'Rosca Alternada Inclinada com Halteres',
         series: '3 séries x 12 repetições',
         rest: 60,
         animationType: 'pull' as const,
-        description: 'Segurando a alça de um galão de água, flexione o cotovelo trazendo a carga até o peito.',
-        tips: 'Mantenha o cotovelo fixo na lateral do corpo.'
+        description: 'Deitado em banco/colchão levemente inclinado, flexione os cotovelos alternadamente girando as palmas.',
+        tips: 'Excelente para recrutar a cabeça longa do bíceps de forma isolada.'
+      },
+      {
+        id: 'ca_pull_4',
+        name: 'Remada Curvada com Dois Halteres',
+        series: '4 séries x 12 repetições',
+        rest: 60,
+        animationType: 'pull' as const,
+        description: 'Tronco inclinado, execute a puxada com halteres trabalhando a espessura das costas.',
+        tips: 'Mantenha a coluna neutra e cabeça alinhada.'
       },
       {
         id: 'ca_pull_5',
-        name: 'Rosca Martelo Bilateral com Garrafas',
-        series: '3 séries x 15 repetições',
+        name: 'Rosca Concentrada com Halter',
+        series: '3 séries x 12 repetições',
         rest: 60,
         animationType: 'pull' as const,
-        description: 'Em pé, eleve garrafas de água com a pegada neutra para trabalhar os bíceps e antebraços.',
-        tips: 'Execute o movimento completo de forma bem cadenciada.'
+        description: 'Apoie o cotovelo na coxa de forma unilateral e erga o peso isolando o bíceps.',
+        tips: 'Ideal para trabalhar o "pico" do bíceps no treino caseiro.'
       },
       {
         id: 'ca_pull_6',
-        name: 'Crucifixo Invertido Curvado (Garrafas)',
+        name: 'Rosca Martelo Alternada com Halteres',
         series: '3 séries x 15 repetições',
-        rest: 65,
+        rest: 60,
         animationType: 'pull' as const,
-        description: 'Incline o tronco para frente, quadris para trás, abra os braços segurando garrafas para deltoide posterior.',
-        tips: 'Ótimo para manter a postura ereta e corrigir ombros caídos.'
+        description: 'Segurando os halteres com as palmas voltadas uma para a outra, faça a flexão alternada.',
+        tips: 'Foco forte no antebraço e braquiorradial.'
+      },
+      {
+        id: 'ca_pull_7',
+        name: 'Crucifixo Invertido com Cabeça Apoiada',
+        series: '3 séries x 15 repetições',
+        rest: 60,
+        animationType: 'pull' as const,
+        description: 'Incline-se apoiando a testa em um banco ou superfície firme e faça a elevação lateral invertida.',
+        tips: 'Isola perfeitamente o posterior de ombro, eliminando o balanço do tronco.'
+      },
+      {
+        id: 'ca_pull_8',
+        name: 'Remada Curvada com Dois Halteres',
+        series: '3 séries x 12 repetições',
+        rest: 60,
+        animationType: 'pull' as const,
+        description: 'Tronco inclinado, puxe os dois halteres em direção ao quadril ativando as costas de forma simétrica.',
+        tips: 'Mantenha as escápulas ativas durante todo o movimento.'
+      },
+      {
+        id: 'ca_pull_9',
+        name: 'Rosca Direta com Barra EZ e Elástico',
+        series: '3 séries x 15 repetições',
+        rest: 60,
+        animationType: 'pull' as const,
+        description: 'Utilize o elástico sob os pés acoplado à barra curta/EZ para adicionar resistência variável ao bíceps.',
+        tips: 'Conforme você sobe o peso, o elástico estica e a contração do bíceps fica absurdamente forte no topo.'
+      },
+      {
+        id: 'ca_pull_10',
+        name: 'Rosca Martelo Cruzada (Cross-Body)',
+        series: '3 séries x 12 repetições',
+        rest: 60,
+        animationType: 'pull' as const,
+        description: 'Traga o halter alternadamente na diagonal na direção do ombro oposto de forma coordenada.',
+        tips: 'Fortalece de forma excelente o braquial e a pegada.'
+      },
+      {
+        id: 'ca_pull_11',
+        name: 'Barra Fixa Assistida com Elástico (Band Assisted)',
+        series: '3 séries x Máximo de repetições',
+        rest: 90,
+        animationType: 'pull' as const,
+        description: 'Na barra fixa de porta, apoie os pés/joelho no elástico para atenuar a carga e facilitar a subida.',
+        tips: 'Excelente para quem está evoluindo na força das costas em casa.'
+      },
+      {
+        id: 'ca_pull_12',
+        name: 'Bom Dia com Elástico (Band Good Morning)',
+        series: '3 séries x 15 repetições',
+        rest: 60,
+        animationType: 'pull' as const,
+        description: 'Posicione o elástico sob os pés e atrás do pescoço, incline o tronco estendendo a lombar e posterior de coxa.',
+        tips: 'Inicie com foco total na flexão do quadril, mantendo a coluna retilínea.'
       }
     ],
     legs: [
       {
         id: 'ca_legs_1',
-        name: 'Agachamento Profundo (Air Squats)',
+        name: 'Agachamento Livre (Peso Corporal)',
         series: '5 séries x 20 repetições',
         rest: 60,
         animationType: 'legs' as const,
-        description: 'Agache até o limite confortável rompendo a linha de 90 graus das pernas, mantendo calcanhares no chão.',
-        tips: 'Empurre os joelhos para fora durante todo o movimento para segurança.'
+        description: 'Agache empurrando os quadris para trás, mantendo os joelhos alinhados com a ponta dos pés.',
+        tips: 'Postura ereta e abdômen contraído são chaves para a boa execução.'
       },
       {
         id: 'ca_legs_2',
-        name: 'Agachamento Búlgaro (Pé na Cadeira)',
-        series: '3 séries x 10 a 12 repetições',
+        name: 'Afundo com Barra/Halteres',
+        series: '3 séries x 12 repetições',
         rest: 60,
         animationType: 'legs' as const,
-        description: 'Apoie o peito de um pé atrás em uma cadeira e dê um passo à frente. Agache de forma unilateral.',
-        tips: 'Incrível exercício para quadríceps e glúteos de forma isolada!'
+        description: 'Com carga nos ombros ou mãos, dê um passo à frente flexionando joelhos a 90 graus.',
+        tips: 'Excelente construtor de coxas e glúteos.'
       },
       {
         id: 'ca_legs_3',
-        name: 'Elevação Pélvica Unilateral (Solo)',
-        series: '3 séries x 15 repetições (cada perna)',
-        rest: 45,
+        name: 'Flexão de Pernas na Bola Suíça',
+        series: '3 séries x 15 repetições',
+        rest: 60,
         animationType: 'legs' as const,
-        description: 'Deitado de costas, levante uma perna esticada e empurre o quadril para o alto usando apenas a outra perna.',
-        tips: 'Excelente para treinar posterior de coxa e glúteo sem pesos adicionais.'
+        description: 'Deitado, com calcanhares na bola suíça, eleve os quadris e puxe a bola em direção aos glúteos.',
+        tips: 'Recrutamento absurdo dos posteriores de coxa (isquiotibiais).'
       },
       {
         id: 'ca_legs_4',
-        name: 'Panturrilha Unilateral no Degrau',
+        name: 'Elevação de Panturrilha Unilateral sobre Halter',
         series: '4 séries x 20 repetições',
         rest: 45,
         animationType: 'legs' as const,
-        description: 'Na ponta de um degrau, faça flexão plantar completa em uma perna de cada vez.',
-        tips: 'Desça o calcanhar o máximo possível para alongar bem a fáscia muscular.'
+        description: 'Em pé, apoie a ponta do pé sobre o pegador de um halter firme para usá-lo como bloco de alongamento.',
+        tips: 'Foco excepcional no alongamento e contração da panturrilha em casa.'
       },
       {
         id: 'ca_legs_5',
-        name: 'Passada / Afundo Alternado',
-        series: '4 séries x 20 passos totais',
+        name: 'Agachamento na Cadeira (Chair Squat)',
+        series: '4 séries x 15 repetições',
         rest: 60,
         animationType: 'legs' as const,
-        description: 'Dê passos alternados à frente, descendo o quadril de forma estável.',
-        tips: 'Mantenha o tronco perfeitamente erguido e abdômen contraído.'
+        description: 'Execute o agachamento de forma controlada tocando sutilmente a cadeira antes de subir.',
+        tips: 'Excelente educativo para aprimorar o padrão de agachamento de forma confortável.'
       },
       {
         id: 'ca_legs_6',
-        name: 'Agachamento Isométrico na Parede (Wall Sit)',
-        series: '3 séries x 45 segundos',
+        name: 'Adução de Quadril com Elástico',
+        series: '3 séries x 15 repetições',
         rest: 45,
         animationType: 'legs' as const,
-        description: 'Costas encostadas na parede, deslize até os joelhos ficarem a 90 graus e segure a posição.',
-        tips: 'Mantenha os braços relaxados e calcanhares firmes.'
+        description: 'Prenda o elástico em um ponto fixo e puxe-o para dentro cruzando as pernas de forma controlada.',
+        tips: 'Ativação específica da musculatura interna da coxa.'
       },
       {
         id: 'ca_legs_7',
-        name: 'Glúteo Coice de Quatro Apoios',
-        series: '3 séries x 15 repetições (cada lado)',
+        name: 'Afundo Reverso Cruzado (Crossover Reverse Lunge)',
+        series: '3 séries x 10 repetições',
+        rest: 60,
+        animationType: 'legs' as const,
+        description: 'Dê um passo para trás e na diagonal (cruzando atrás do corpo), flexionando os joelhos para agachar.',
+        tips: 'Uma das variações mais potentes e eficientes para ativação e modelagem de glúteos.'
+      },
+      {
+        id: 'ca_legs_8',
+        name: 'Bom Dia com Elástico (Band Good Morning)',
+        series: '4 séries x 12 repetições',
+        rest: 60,
+        animationType: 'legs' as const,
+        description: 'Realize a flexão de quadril com elástico exercendo força para trás contra a lombar.',
+        tips: 'Sinta o alongamento concentrado nos posteriores de coxa.'
+      },
+      {
+        id: 'ca_legs_9',
+        name: 'Afundo Estático com Barra/Halteres nos Ombros',
+        series: '3 séries x 12 repetições',
+        rest: 60,
+        animationType: 'legs' as const,
+        description: 'Segure peso nos ombros e flexione as pernas de forma unilateral com equilíbrio.',
+        tips: 'Garante excelente desenvolvimento de força unilateral.'
+      },
+      {
+        id: 'ca_legs_10',
+        name: 'Passada Caminhando (Peso Corporal)',
+        series: '4 séries x 20 passos totais',
+        rest: 60,
+        animationType: 'legs' as const,
+        description: 'Dê passos coordenados flexionando alternadamente cada perna a 90 graus.',
+        tips: 'Trabalho unilateral espetacular para condicionamento e pernas.'
+      },
+      {
+        id: 'ca_legs_11',
+        name: 'Subida no Degrau/Banco com Barra nos Ombros',
+        series: '3 séries x 12 repetições',
+        rest: 60,
+        animationType: 'legs' as const,
+        description: 'Com carga nos ombros, suba em um banco firme estendendo a perna de apoio completamente.',
+        tips: 'A perna que sobe puxa todo o peso, ideal para glúteos e quadríceps.'
+      },
+      {
+        id: 'ca_legs_12',
+        name: 'Elevação Pélvica de Solo (Butt Lift / Bridge)',
+        series: '3 séries x 15 repetições',
         rest: 45,
         animationType: 'legs' as const,
-        description: 'Em quatro apoios no solo, empurre a sola do pé em direção ao teto contraindo o glúteo.',
-        tips: 'Não curve a coluna lombar na subida.'
+        description: 'Deitado com joelhos flexionados, eleve o quadril contraindo glúteos intensamente no topo.',
+        tips: 'Mantenha a força concentrada nos calcanhares.'
       }
     ],
     core: [
       {
         id: 'ca_core_1',
-        name: 'Prancha Abdominal Estática de Solo',
-        series: '4 séries x 40 segundos',
+        name: 'Abdominal Bicicleta (Air Bike)',
+        series: '4 séries x 45 segundos ativos',
         rest: 30,
         animationType: 'core' as const,
-        description: 'Apoie os antebraços e pontas dos pés mantendo o alinhamento retilíneo da coluna.',
-        tips: 'Não deixe o quadril cair.'
+        description: 'No ar, simule pedalar alternando joelho com o cotovelo oposto de forma dinâmica.',
+        tips: 'Mantém a tensão contínua em toda a parede abdominal.'
       },
       {
         id: 'ca_core_2',
-        name: 'Abdominal Bicicleta (Oblíquos)',
+        name: 'Abdominal Cruzado (Cross-Body Crunch)',
         series: '3 séries x 20 repetições',
         rest: 45,
         animationType: 'core' as const,
-        description: 'Deitado, traga o cotovelo oposto em direção ao joelho flexionado em movimentos alternados.',
-        tips: 'Sinta a rotação do tronco e contração forte das laterais.'
+        description: 'Deitado, traga o cotovelo oposto em direção ao joelho flexionado alternando os lados.',
+        tips: 'Sinta os oblíquos laterais esmagarem.'
       },
       {
         id: 'ca_core_3',
-        name: 'Abdominal Remador Completo',
+        name: 'Abdominais de Solo Clássicos',
         series: '4 séries x 15 repetições',
         rest: 45,
         animationType: 'core' as const,
-        description: 'Deite-se completamente e suba sentando, abraçando os joelhos simultaneamente.',
-        tips: 'Use os braços para auxiliar na subida controlada e segure 1s.'
+        description: 'Realize flexões do abdômen mantendo a coluna lombar apoiada no solo.',
+        tips: 'Aperte e segure a contração máxima.'
       },
       {
         id: 'ca_core_4',
-        name: 'Abdominal Russo (Russian Twists)',
-        series: '3 séries x 20 rotações',
+        name: 'Abdominal Declinado',
+        series: '3 séries x 20 repetições',
         rest: 45,
         animationType: 'core' as const,
-        description: 'Sentado com joelhos semi-flexionados, incline o tronco para trás a 45º e gire as mãos de um lado para o outro.',
-        tips: 'Erga os pés do chão para aumentar o desafio se for intermediário.'
+        description: 'Em plano declinado (sofá ou colchão adaptado), flexione o reto abdominal trazendo o tronco.',
+        tips: 'Evite tensionar o pescoço.'
       },
       {
         id: 'ca_core_5',
-        name: 'Abdominal Elevação de Pernas (Infra)',
-        series: '3 séries x 15 repetições',
+        name: 'Abdominal Toque no Calcanhar',
+        series: '3 séries x 20 repetições',
         rest: 45,
         animationType: 'core' as const,
-        description: 'Deitado com as mãos sob o quadril, eleve as pernas esticadas até 90 graus e desça devagar.',
-        tips: 'Mantenha as pernas sem tocar o solo no final para manter a tensão.'
+        description: 'Deitado, flexione o tronco lateralmente tocando os calcanhares alternadamente.',
+        tips: 'Exercício fantástico e seguro para definir os oblíquos.'
       }
     ],
     cardio: [
       {
         id: 'ca_cardio_1',
-        name: 'Burpees Completos (Corpo Todo)',
-        series: '4 séries x 10 repetições',
+        name: 'Bicicleta Ergométrica',
+        series: '4 séries x 5 minutos dinâmicos',
         rest: 60,
         animationType: 'cardio' as const,
-        description: 'Inicie de pé, agache rapidamente, jogue as pernas para trás fazendo flexão, suba e salte.',
-        tips: 'O exercício de peso corporal definitivo para condicionamento e queima calórica.'
+        description: 'Pedale de forma constante e intensa simulando subidas.',
+        tips: 'Garante excelente condicionamento aeróbico sem sair de casa.'
       },
       {
         id: 'ca_cardio_2',
-        name: 'Polichinelos Rápidos de Cardio',
-        series: '4 séries x 60 segundos ativos',
+        name: 'Salto na Caixa (Box Jump)',
+        series: '4 séries x 12 repetições',
         rest: 30,
         animationType: 'cardio' as const,
-        description: 'Coordene braços e pernas fechando e abrindo em velocidade constante e ritmo alto.',
-        tips: 'Mantenha ritmo constante e aterrissagem leve nas pontas dos pés.'
+        description: 'Salte sobre uma caixa ou plataforma sólida estendendo totalmente os quadris ao topo.',
+        tips: 'Amorteça a descida flexionando levemente os joelhos.'
       },
       {
         id: 'ca_cardio_3',
-        name: 'Corrida Estacionária (Skipping)',
+        name: 'Salto Alternado na Caixa (Box Skip)',
         series: '4 séries x 45 segundos ativos',
         rest: 30,
         animationType: 'cardio' as const,
-        description: 'Simule corrida elevando os joelhos à altura do quadril sem sair do lugar.',
-        tips: 'Mova os braços coordenadamente nas laterais ajudando no impulso.'
+        description: 'Suba e desça a caixa alternando as pernas de forma explosiva.',
+        tips: 'Ótima queima de gordura e fortalecimento do quadríceps.'
       },
       {
         id: 'ca_cardio_4',
-        name: 'Mountain Climbers (Escalador Solo)',
-        series: '4 séries x 45 segundos ativos',
+        name: 'Salto de Profundidade no Degrau (Depth Jump Leap)',
+        series: '4 séries x 10 saltos',
         rest: 30,
         animationType: 'cardio' as const,
-        description: 'Na posição de flexão, traga os joelhos alternadamente rumo ao peito em velocidade.',
-        tips: 'Trabalha aeróbico intenso e o abdômen ao mesmo tempo.'
+        description: 'Dê um passo para fora de um degrau e ao tocar o solo salte explosivamente para cima.',
+        tips: 'Desenvolve potência reativa e agilidade cardiovascular.'
       }
     ]
   }

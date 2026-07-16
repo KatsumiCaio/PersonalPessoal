@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { RotateCcw, Compass, Move, Sparkles, HelpCircle } from 'lucide-react';
+import { RotateCcw, Compass, Move, Sparkles, HelpCircle, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface ExerciseAnimationProps {
   type: 'push' | 'pull' | 'legs' | 'core' | 'cardio';
@@ -42,35 +42,40 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
           core: '#3b82f6',
           coreRGB: '59, 130, 246',
           highlight: '#60a5fa',
-          needle: '#3b82f6'
+          needle: '#3b82f6',
+          dark: '#1e3a8a'
         };
       case 'verde':
         return {
           core: '#10b981',
           coreRGB: '16, 185, 129',
           highlight: '#34d399',
-          needle: '#10b981'
+          needle: '#10b981',
+          dark: '#064e3b'
         };
       case 'roxo':
         return {
           core: '#8b5cf6',
           coreRGB: '139, 92, 246',
           highlight: '#a78bfa',
-          needle: '#8b5cf6'
+          needle: '#8b5cf6',
+          dark: '#4c1d95'
         };
       case 'rosa':
         return {
           core: '#ec4899',
           coreRGB: '236, 72, 153',
           highlight: '#f472b6',
-          needle: '#ec4899'
+          needle: '#ec4899',
+          dark: '#831843'
         };
       case 'amarelo':
         return {
           core: '#eab308',
           coreRGB: '234, 179, 8',
           highlight: '#facc15',
-          needle: '#eab308'
+          needle: '#eab308',
+          dark: '#713f12'
         };
       case 'laranja':
       default:
@@ -78,7 +83,8 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
           core: '#f97316',
           coreRGB: '249, 115, 22',
           highlight: '#f59e0b',
-          needle: '#f97316'
+          needle: '#f97316',
+          dark: '#7c2d12'
         };
     }
   };
@@ -89,6 +95,7 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
   const [yaw, setYaw] = useState<number>(0.4); // rotation around Y axis
   const [pitch, setPitch] = useState<number>(0.15); // rotation around X axis
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [showSafetyInfo, setShowSafetyInfo] = useState<boolean>(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const cameraAngles = useRef({ yaw: 0.4, pitch: 0.15 });
 
@@ -424,11 +431,12 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         joints.lHand = getInclinedPt(-18, 20, pressExt);
         joints.rHand = getInclinedPt(18, 20, pressExt);
 
-        // Elbows bend sideways
+        // Elbows bend sideways and tuck naturally at ~45-60 degrees for maximum shoulder safety!
         const elbowFlare = 20 * (1 - phase * 0.15);
         const elbowOut = 1 + 8 * phase;
-        joints.lElbow = getInclinedPt(-elbowFlare, 20, elbowOut);
-        joints.rElbow = getInclinedPt(elbowFlare, 20, elbowOut);
+        const elbowYInclined = 20 - 5 * (1 - phase * 0.5); // Safe elbow tuck towards ribs, protecting joints from impingement
+        joints.lElbow = getInclinedPt(-elbowFlare, elbowYInclined, elbowOut);
+        joints.rElbow = getInclinedPt(elbowFlare, elbowYInclined, elbowOut);
 
         // Muscle focus: Upper pectoral pectorals major (focus of incline!) and anterior deltoids
         muscleFocusAreas.push({ x: -4, y: getInclinedPt(0, 18, 2).y, z: getInclinedPt(0, 18, 2).z, intensity: phase, size: 18 });
@@ -456,10 +464,12 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         joints.lHand = { x: -18, y: pressY, z: 20 };
         joints.rHand = { x: 18, y: pressY, z: 20 };
 
+        // Elbows tuck safely at 45 degrees relative to torso to prevent shoulder rotator cuff injury!
         const elbowFlare = 21 * (1 - phase * 0.15);
         const elbowY = yBench - 1 - 11 * phase;
-        joints.lElbow = { x: -elbowFlare, y: elbowY, z: 20 };
-        joints.rElbow = { x: elbowFlare, y: elbowY, z: 20 };
+        const elbowZ = 12 + 4 * phase; // Safe elbow tuck, preventing dangerous 90-degree flare
+        joints.lElbow = { x: -elbowFlare, y: elbowY, z: elbowZ };
+        joints.rElbow = { x: elbowFlare, y: elbowY, z: elbowZ };
 
         // Muscle focus: Whole chest pectorals
         muscleFocusAreas.push({ x: 0, y: yBench - 3, z: 20, intensity: phase, size: 22 });
@@ -512,18 +522,48 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         joints.lFoot = { x: -7, y: 32, z: 0 };
         joints.rFoot = { x: 7, y: 32, z: 0 };
 
-        // Hands raising in wide lateral arc (Dumbbell)
-        const angleLat = (15 + 75 * phase) * (Math.PI / 180);
-        const lX = -14 - Math.cos(angleLat) * 24;
-        const lY = -25 - Math.sin(angleLat) * 24;
-        const rX = 14 + Math.cos(angleLat) * 24;
-        const rY = -25 - Math.sin(angleLat) * 24;
+        // Hands raising in wide lateral arc (Dumbbell) in the scapular plane
+        // Max abduction angle is 82 degrees to avoid subacromial impingement / shoulder injury
+        const angleArm = (15 + 67 * phase) * (Math.PI / 180);
+        const planeAngle = 20 * (Math.PI / 180); // 20 degrees forward in scapular plane
+        const L1 = 12.2; // Rigid Upper Arm length
+        const L2 = 12.5; // Rigid Forearm length
 
-        joints.lHand = { x: lX, y: lY, z: 2 * (1-phase) };
-        joints.rHand = { x: rX, y: rY, z: 2 * (1-phase) };
+        // Left Arm
+        const ux = -Math.sin(angleArm) * Math.cos(planeAngle);
+        const uy = Math.cos(angleArm);
+        const uz = Math.sin(angleArm) * Math.sin(planeAngle);
 
-        joints.lElbow = { x: (joints.lShoulder.x + lX)/2 - 2, y: (joints.lShoulder.y + lY)/2 + 2, z: 1 };
-        joints.rElbow = { x: (joints.rShoulder.x + rX)/2 + 2, y: (joints.rShoulder.y + rY)/2 + 2, z: 1 };
+        joints.lElbow = {
+          x: joints.lShoulder.x + ux * L1,
+          y: joints.lShoulder.y + uy * L1,
+          z: joints.lShoulder.z + uz * L1
+        };
+
+        // Forearm with a slight safe elbow bend (~15 degrees flexion)
+        const angleForearm = angleArm - 15 * (Math.PI / 180);
+        const fx = -Math.sin(angleForearm) * Math.cos(planeAngle);
+        const fy = Math.cos(angleForearm);
+        const fz = Math.sin(angleForearm) * Math.sin(planeAngle) + 0.15;
+
+        joints.lHand = {
+          x: joints.lElbow.x + fx * L2,
+          y: joints.lElbow.y + fy * L2,
+          z: joints.lElbow.z + fz * L2
+        };
+
+        // Right Arm (perfectly mirrored)
+        joints.rElbow = {
+          x: joints.rShoulder.x - ux * L1,
+          y: joints.rShoulder.y + uy * L1,
+          z: joints.rShoulder.z + uz * L1
+        };
+
+        joints.rHand = {
+          x: joints.rElbow.x - fx * L2,
+          y: joints.rElbow.y + fy * L2,
+          z: joints.rElbow.z + fz * L2
+        };
 
         // Muscle focus: Lateral deltoid
         muscleFocusAreas.push({ x: -15, y: -24, z: 0, intensity: phase, size: 15 });
@@ -545,15 +585,21 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         joints.lFoot = { x: -7, y: 32, z: 2 };
         joints.rFoot = { x: 7, y: 32, z: 2 };
 
-        // Elbows pinned tightly at ribs
+        // Elbows pinned tightly at ribs for complete isolation and stabilization
         joints.lElbow = { x: -11, y: -11, z: 3 };
         joints.rElbow = { x: 11, y: -11, z: 3 };
 
-        // Hands pressing down extending forearms
-        const handY = -12 + 22 * phase;
-        const handZ = 8 + 8 * phase;
-        joints.lHand = { x: -10, y: handY, z: handZ };
-        joints.rHand = { x: 10, y: handY, z: handZ };
+        // Hands pressing down extending forearms (rotating in a constant 3D radial arc)
+        // Angle goes from flexion (-20 degrees) to nearly full extension (+75 degrees)
+        // Keeping a safe micro-flexion of 15 degrees to prevent heavy joint lockout under load
+        const theta = (-20 + 95 * phase) * (Math.PI / 180);
+        const L2 = 13.5; // Constant Forearm Length (rigid mannequin, no rubber stretching!)
+        
+        const dy = Math.sin(theta) * L2;
+        const dz = Math.cos(theta) * L2;
+
+        joints.lHand = { x: -8, y: joints.lElbow.y + dy, z: joints.lElbow.z + dz };
+        joints.rHand = { x: 8, y: joints.rElbow.y + dy, z: joints.rElbow.z + dz };
 
         // Muscle focus: Triceps Brachii (back of arms)
         muscleFocusAreas.push({ x: -13, y: -17, z: 2, intensity: phase, size: 12 });
@@ -809,8 +855,9 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         joints.rElbow = { x: 15, y: 10, z: -24 };
 
         // Legs pushing along 45 degree path (Y and Z both changing)
-        // Extension length goes from 5 (fully bent) to 26 (fully extended)
-        const legExt = 5 + 23 * phase;
+        // Extension length goes from 5 (fully bent) to 20 (safe extension, avoiding joint lockout!)
+        // Preventing full lockouts is critical to protect the knee joints from catastrophic load stress
+        const legExt = 5 + 15 * phase;
         const legY = 20 - legExt * Math.sin(Math.PI/4);
         const legZ = -18 + legExt * Math.cos(Math.PI/4);
 
@@ -819,9 +866,9 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
 
         // Knees bending laterally out of the way
         const kneeY = (20 + legY)/2 + 4 * (1 - phase);
-        const kneeZ = (-18 + legZ)/2 - 7 * (1 - phase);
-        joints.lKnee = { x: -15 + 4*phase, y: kneeY, z: kneeZ };
-        joints.rKnee = { x: 15 - 4*phase, y: kneeY, z: kneeZ };
+        const kneeZ = (-18 + legZ)/2 - 6 * (1 - phase);
+        joints.lKnee = { x: -14 + 3*phase, y: kneeY, z: kneeZ };
+        joints.rKnee = { x: 14 - 3*phase, y: kneeY, z: kneeZ };
 
         // Muscle focus: Quadriceps, Gluteus, and Calves
         muscleFocusAreas.push({ x: -12, y: (joints.lHip.y + kneeY)/2, z: (joints.lHip.z + kneeZ)/2, intensity: phase, size: 20 });
@@ -896,32 +943,32 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         muscleFocusAreas.push({ x: 9, y: yBench - 2, z: 3, intensity: phase, size: 16 });
       }
       else if (exerciseKey === 'agachamento') {
-        // Leg Squatting animation
+        // Leg Squatting animation with highly safe form (knees staying behind/over toes, flat neutral spine)
         joints.lFoot = { x: -12, y: 32, z: 0 };
         joints.rFoot = { x: 12, y: 32, z: 0 };
         
         // Hips sink down and push backwards
         const hipY = 8 + 18 * phase;
-        const hipZ = -5 - 14 * phase;
+        const hipZ = -5 - 15 * phase; // Push hips back to load hamstrings and glutes safely
         joints.hip = { x: 0, y: hipY, z: hipZ };
         joints.lHip = { x: -7, y: hipY, z: hipZ };
         joints.rHip = { x: 7, y: hipY, z: hipZ };
 
-        // Knees bend forward
-        const kneeY = 20 + 4 * phase;
-        const kneeZ = 10 + 6 * phase;
+        // Knees stay aligned over feet (preventing knee shearing stress and excessive forward travel)
+        const kneeY = 18 + 5 * phase;
+        const kneeZ = 5 + 4 * phase; // Controlled forward travel
         joints.lKnee = { x: -11, y: kneeY, z: kneeZ };
         joints.rKnee = { x: 11, y: kneeY, z: kneeZ };
 
-        // Spine and head leaning slightly forward
-        const spineY = hipY - 18;
-        const spineZ = hipZ + 2 + 5 * phase;
+        // Spine and neck remain perfectly straight and neutral (avoiding lumbar rounding/butt-wink)
+        const spineY = hipY - 14;
+        const spineZ = hipZ + 8;
         joints.spine = { x: 0, y: spineY, z: spineZ };
 
-        const neckY = spineY - 16;
-        const neckZ = spineZ + 3 + 5 * phase;
+        const neckY = spineY - 12;
+        const neckZ = spineZ + 7;
         joints.neck = { x: 0, y: neckY, z: neckZ };
-        joints.head = { x: 0, y: neckY - 8, z: neckZ + 2 };
+        joints.head = { x: 0, y: neckY - 7, z: neckZ + 2 };
 
         joints.lShoulder = { x: -13, y: neckY + 2, z: neckZ };
         joints.rShoulder = { x: 13, y: neckY + 2, z: neckZ };
@@ -1134,6 +1181,23 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         projected[key] = project(joints[key], width, height, activeYaw, activePitch);
       });
 
+      if (projected.lHip && projected.lKnee) {
+        projected['lThighMid'] = {
+          x: projected.lHip.x + (projected.lKnee.x - projected.lHip.x) * 0.44,
+          y: projected.lHip.y + (projected.lKnee.y - projected.lHip.y) * 0.44,
+          scale: projected.lHip.scale + (projected.lKnee.scale - projected.lHip.scale) * 0.44,
+          depth: projected.lHip.depth + (projected.lKnee.depth - projected.lHip.depth) * 0.44
+        };
+      }
+      if (projected.rHip && projected.rKnee) {
+        projected['rThighMid'] = {
+          x: projected.rHip.x + (projected.rKnee.x - projected.rHip.x) * 0.44,
+          y: projected.rHip.y + (projected.rKnee.y - projected.rHip.y) * 0.44,
+          scale: projected.rHip.scale + (projected.rKnee.scale - projected.rHip.scale) * 0.44,
+          depth: projected.rHip.depth + (projected.rKnee.depth - projected.rHip.depth) * 0.44
+        };
+      }
+
       // RENDER 3D EQUIPMENT SUPPORT GEOMETRY (Bench, sled, pulley cables)
       if (exerciseKey === 'supino_inclinado' && projected.lHand && projected.rHand) {
         // Draw the Incline Gym Bench structure support
@@ -1267,16 +1331,26 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         ctx.stroke();
       }
 
-      // HIGH-FIDELITY METALLIC MANNEQUIN segments
-      const segmentBaseColor = '#3f3f46'; // Neutral slate mannequin skin
-      const segmentHighlightColor = '#a1a1aa'; // Specular metallic highlights
-      const activeSegmentColor = '#ef4444'; // Red glowing muscle tissue contraction
+      // HIGH-FIDELITY METALLIC MANNEQUIN segments (Grayscale / Silver Skin)
+      const segmentBaseColor = '#4b5563'; // Silver mannequin base
+      const segmentHighlightColor = '#f3f4f6'; // Specular metallic highlights
+      const activeSegmentColor = themeColors.core; // Glowing muscle tissue contraction
 
       // Is target active
       const isPush = exerciseKey === 'supino_inclinado' || exerciseKey === 'supino_reto' || exerciseKey === 'desenvolvimento';
       const isPull = exerciseKey === 'puxada_pulley' || exerciseKey === 'remada_baixa' || exerciseKey === 'remada_curvada' || exerciseKey === 'rosca_biceps';
       const isLegs = exerciseKey === 'leg_press' || exerciseKey === 'extensora' || exerciseKey === 'flexora' || exerciseKey === 'agachamento' || exerciseKey === 'elevacao_pelvica';
       const isCore = exerciseKey === 'abdominal' || exerciseKey === 'prancha';
+
+      const isChest = exerciseKey === 'supino_reto' || exerciseKey === 'supino_inclinado' || exerciseKey === 'crucifixo';
+      const isTriceps = exerciseKey === 'triceps_polia' || exerciseKey === 'triceps_testa' || exerciseKey === 'triceps_dips_banco' || exerciseKey === 'desenvolvimento' || exerciseKey === 'supino_reto' || exerciseKey === 'supino_inclinado';
+      const isBiceps = exerciseKey === 'rosca_biceps' || exerciseKey === 'puxada_pulley' || exerciseKey === 'remada_baixa' || exerciseKey === 'remada_curvada';
+      const isShoulders = exerciseKey === 'desenvolvimento' || exerciseKey === 'elevacao_lateral' || exerciseKey === 'supino_inclinado';
+      const isBack = exerciseKey === 'puxada_pulley' || exerciseKey === 'remada_baixa' || exerciseKey === 'remada_curvada';
+      const isQuads = exerciseKey === 'leg_press' || exerciseKey === 'extensora' || exerciseKey === 'agachamento';
+      const isHamstrings = exerciseKey === 'flexora' || exerciseKey === 'elevacao_pelvica';
+      const isCalves = exerciseKey === 'panturrilha' || exerciseKey === 'leg_press';
+      const isAbs = exerciseKey === 'abdominal' || exerciseKey === 'prancha';
 
       // 3D volumetric capsule drawing helper
       const drawVolumetricSegment = (fromKey: string, toKey: string, radius: number, baseCol: string, highCol: string, isActive?: boolean) => {
@@ -1311,20 +1385,19 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         );
 
         if (isActive) {
-          // Glow biological active red/orange muscle overlay
-          const pulse = 0.8 + Math.sin(time * 0.008) * 0.2;
-          grad.addColorStop(0, '#7f1d1d'); // dark crimson back
-          grad.addColorStop(0.3, '#ef4444'); // hot active red
-          grad.addColorStop(0.5, themeColors.core); // glowing core active theme
-          grad.addColorStop(0.8, themeColors.highlight); // active theme highlight
-          grad.addColorStop(1.0, '#7f1d1d');
+          // Glow biological active muscle overlay based on theme
+          grad.addColorStop(0, themeColors.dark);
+          grad.addColorStop(0.3, themeColors.core);
+          grad.addColorStop(0.5, themeColors.highlight);
+          grad.addColorStop(0.8, themeColors.core);
+          grad.addColorStop(1.0, themeColors.dark);
         } else {
-          // Standard modern biomechanical metal mannequin
-          grad.addColorStop(0, '#18181b');
-          grad.addColorStop(0.2, baseCol);
-          grad.addColorStop(0.5, highCol); // Specular highlight sheen
-          grad.addColorStop(0.8, baseCol);
-          grad.addColorStop(1.0, '#09090b');
+          // Standard silver/gray biological mannequin look
+          grad.addColorStop(0, '#1f2937');
+          grad.addColorStop(0.2, '#4b5563');
+          grad.addColorStop(0.5, '#f3f4f6'); // specular highlight
+          grad.addColorStop(0.8, '#9ca3af');
+          grad.addColorStop(1.0, '#1f2937');
         }
 
         ctx.strokeStyle = grad;
@@ -1334,7 +1407,7 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         if (isActive && len > 10) {
           ctx.beginPath();
           ctx.lineWidth = scaledRad * 0.25;
-          ctx.strokeStyle = 'rgba(254, 240, 138, 0.4)'; // bright yellowish overlay fibers
+          ctx.strokeStyle = `rgba(${themeColors.coreRGB}, 0.55)`; // bright theme overlay fibers
           ctx.setLineDash([4, 6]);
           ctx.moveTo(pA.x - px * scaledRad * 0.2, pA.y - py * scaledRad * 0.2);
           ctx.lineTo(pB.x - px * scaledRad * 0.2, pB.y - py * scaledRad * 0.2);
@@ -1421,21 +1494,21 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         );
 
         if (isActive) {
-          // Glowing biological anatomical active state (crimson muscle fibers)
-          const pulse = 0.85 + Math.sin(time * 0.009) * 0.15;
-          grad.addColorStop(0, '#450a0a'); // Deep shadow
-          grad.addColorStop(0.2, '#991b1b'); // Dark red
-          grad.addColorStop(0.45, '#ef4444'); // Glowing active red
-          grad.addColorStop(0.65, '#f87171'); // Highlighted muscle belly
-          grad.addColorStop(0.85, '#fca5a5'); // Specular fibers glint
-          grad.addColorStop(1.0, '#450a0a');
+          // Glowing biological anatomical active state (colored muscle fibers based on theme with skin undertone)
+          grad.addColorStop(0, '#230b02'); // Deep biological boundary shadow
+          grad.addColorStop(0.2, themeColors.dark); // Theme shadow
+          grad.addColorStop(0.45, themeColors.core); // Glowing core muscle contraction
+          grad.addColorStop(0.65, themeColors.highlight); // Warm highlighted fiber
+          grad.addColorStop(0.85, '#ffffff'); // Shiny specular sweat glint
+          grad.addColorStop(1.0, '#230b02');
         } else {
-          // Warm premium human athletic muscle look
-          grad.addColorStop(0, '#2e150a'); // Shadow
-          grad.addColorStop(0.25, '#5c2d1b'); // Muscle base
-          grad.addColorStop(0.5, '#d39e82'); // White sheen glint on skin
-          grad.addColorStop(0.75, '#874b33'); // Mid-tone curve
-          grad.addColorStop(1.0, '#2e150a');
+          // Warm premium human athletic skin and deep muscular definition
+          grad.addColorStop(0, '#2e150a');      // Deep anatomical cleavage shadow
+          grad.addColorStop(0.2, '#5c2d1b');     // Healthy rich muscle base shade
+          grad.addColorStop(0.5, '#e5a585');     // Beautiful warm mid-tone skin
+          grad.addColorStop(0.72, '#ffeedd');    // Specular perspiration highlight (sweaty sheen)
+          grad.addColorStop(0.85, '#d08365');    // Reflective muscle curve light
+          grad.addColorStop(1.0, '#2e150a');     // Core background shadow
         }
 
         ctx.fillStyle = grad;
@@ -1443,7 +1516,7 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
 
         // Draw internal skeletal muscle fiber striation patterns
         ctx.lineWidth = 0.8;
-        ctx.strokeStyle = isActive ? 'rgba(254, 240, 138, 0.45)' : 'rgba(214, 211, 209, 0.22)';
+        ctx.strokeStyle = isActive ? `rgba(${themeColors.coreRGB}, 0.5)` : 'rgba(255, 255, 255, 0.22)';
         ctx.setLineDash([5, 8]);
         ctx.beginPath();
         for (let offsetFactor of [-0.4, 0, 0.4]) {
@@ -1459,7 +1532,7 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         ctx.setLineDash([]);
 
         // Dark crisp outline vector boundary for anatomical sketch look
-        ctx.strokeStyle = isActive ? '#7f1d1d' : '#292524';
+        ctx.strokeStyle = isActive ? themeColors.dark : '#111827';
         ctx.lineWidth = 1.1;
         ctx.stroke();
 
@@ -1505,25 +1578,27 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
           ctx.closePath();
 
           let pecGrad = ctx.createRadialGradient(shoulder.x, shoulder.y, 2, sternumX, sternumY, pecSize * 2.3);
-          if (isPush) {
-            pecGrad.addColorStop(0, '#f87171');
-            pecGrad.addColorStop(0.4, '#b91c1c');
-            pecGrad.addColorStop(1, '#450a0a');
-          } else {
-            pecGrad.addColorStop(0, '#d39e82');
-            pecGrad.addColorStop(0.4, '#874b33');
+          if (isChest) {
+            pecGrad.addColorStop(0, '#ffeedd');
+            pecGrad.addColorStop(0.3, themeColors.highlight);
+            pecGrad.addColorStop(0.6, themeColors.core);
             pecGrad.addColorStop(1, '#2e150a');
+          } else {
+            pecGrad.addColorStop(0, '#ffeedd');   // Specular highlights
+            pecGrad.addColorStop(0.4, '#e5a585');  // Warm skin mid-tone
+            pecGrad.addColorStop(0.8, '#874b33');  // Rich shadow definition
+            pecGrad.addColorStop(1.0, '#2e150a');  // Deep sternum cleft shadow
           }
           ctx.fillStyle = pecGrad;
           ctx.fill();
-          ctx.strokeStyle = isPush ? '#991b1b' : '#292524';
+          ctx.strokeStyle = isChest ? themeColors.dark : '#111827';
           ctx.lineWidth = 1.2;
           ctx.stroke();
 
           // Pectoral fiber striations pointing from sternum outward to shoulder insertion
           ctx.beginPath();
           ctx.lineWidth = 0.9;
-          ctx.strokeStyle = isPush ? 'rgba(254, 240, 138, 0.38)' : 'rgba(214, 211, 209, 0.18)';
+          ctx.strokeStyle = isChest ? `rgba(${themeColors.coreRGB}, 0.38)` : 'rgba(255, 255, 255, 0.18)';
           ctx.setLineDash([3, 5]);
           for (let f = 0.2; f < 1.0; f += 0.25) {
             ctx.moveTo(shoulder.x, shoulder.y + pecSize * 0.2);
@@ -1578,20 +1653,21 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
             ctx.ellipse(bx, by, rx, ry, Math.atan2(ny, nx) + Math.PI / 2, 0, Math.PI * 2);
 
             let abGrad = ctx.createRadialGradient(bx, by, 0, bx, by, rx * 1.5);
-            if (isCore) {
-              const p = 0.85 + Math.sin(time * 0.008) * 0.15;
-              abGrad.addColorStop(0, '#fca5a5');
-              abGrad.addColorStop(0.4, '#ef4444');
-              abGrad.addColorStop(1, '#7f1d1d');
-            } else {
-              abGrad.addColorStop(0, '#d39e82');
-              abGrad.addColorStop(0.5, '#874b33');
+            if (isAbs) {
+              abGrad.addColorStop(0, '#ffeedd');
+              abGrad.addColorStop(0.3, themeColors.highlight);
+              abGrad.addColorStop(0.6, themeColors.core);
               abGrad.addColorStop(1, '#2e150a');
+            } else {
+              abGrad.addColorStop(0, '#ffeedd');   // Specular abdominal sheen
+              abGrad.addColorStop(0.35, '#e5a585'); // Healthy tan base
+              abGrad.addColorStop(0.7, '#874b33');  // Deep abdominal groove definition
+              abGrad.addColorStop(1.0, '#2e150a');  // Absolute background shadow
             }
 
             ctx.fillStyle = abGrad;
             ctx.fill();
-            ctx.strokeStyle = isCore ? '#991b1b' : '#292524';
+            ctx.strokeStyle = isAbs ? themeColors.dark : '#111827';
             ctx.lineWidth = 1.0;
             ctx.stroke();
           }
@@ -1609,12 +1685,14 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         
         const shGrad = ctx.createRadialGradient(pS.x - rad * 0.2, pS.y - rad * 0.2, 0, pS.x, pS.y, rad);
         if (isActive) {
-          shGrad.addColorStop(0, '#fca5a5');
-          shGrad.addColorStop(0.4, '#ef4444');
-          shGrad.addColorStop(1, '#7f1d1d');
+          shGrad.addColorStop(0, '#ffeedd');
+          shGrad.addColorStop(0.35, themeColors.highlight);
+          shGrad.addColorStop(0.7, themeColors.core);
+          shGrad.addColorStop(1, '#2e150a');
         } else {
-          shGrad.addColorStop(0, '#d39e82');
-          shGrad.addColorStop(0.4, '#874b33');
+          shGrad.addColorStop(0, '#ffeedd');
+          shGrad.addColorStop(0.45, '#e5a585');
+          shGrad.addColorStop(0.8, '#874b33');
           shGrad.addColorStop(1, '#2e150a');
         }
 
@@ -1622,7 +1700,7 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         ctx.arc(pS.x, pS.y, rad, 0, Math.PI * 2);
         ctx.fillStyle = shGrad;
         ctx.fill();
-        ctx.strokeStyle = isActive ? '#991b1b' : '#292524';
+        ctx.strokeStyle = isActive ? themeColors.dark : '#111827';
         ctx.lineWidth = 1.1;
         ctx.stroke();
         ctx.restore();
@@ -1630,12 +1708,12 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
 
       // DRAW MUSCLES WITH DETAILED BULGES (BIOLOGICAL MUSCULAR LOOK)
       // Thighs (Bulging Quadriceps)
-      drawAnatomicalMuscle('lHip', 'lKnee', 5.8, 1.34, 0.45, segmentBaseColor, segmentHighlightColor, isLegs);
-      drawAnatomicalMuscle('rHip', 'rKnee', 5.8, 1.34, 0.45, segmentBaseColor, segmentHighlightColor, isLegs);
+      drawAnatomicalMuscle('lHip', 'lKnee', 5.8, 1.34, 0.45, segmentBaseColor, segmentHighlightColor, isQuads || isHamstrings);
+      drawAnatomicalMuscle('rHip', 'rKnee', 5.8, 1.34, 0.45, segmentBaseColor, segmentHighlightColor, isQuads || isHamstrings);
       
       // Calves (Prominent bulging Gastrocnemius upper, tapering down to Achilles tendon)
-      drawAnatomicalMuscle('lKnee', 'lFoot', 4.4, 1.48, 0.32, '#27272a', '#71717a', exerciseKey === 'panturrilha');
-      drawAnatomicalMuscle('rKnee', 'rFoot', 4.4, 1.48, 0.32, '#27272a', '#71717a', exerciseKey === 'panturrilha');
+      drawAnatomicalMuscle('lKnee', 'lFoot', 4.4, 1.48, 0.32, segmentBaseColor, segmentHighlightColor, isCalves);
+      drawAnatomicalMuscle('rKnee', 'rFoot', 4.4, 1.48, 0.32, segmentBaseColor, segmentHighlightColor, isCalves);
 
       // Abdomen base frame
       drawAnatomicalAbs();
@@ -1644,22 +1722,29 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
       drawAnatomicalChest();
 
       // Lower Pelvic/Hip Plate
-      drawAnatomicalMuscle('lHip', 'rHip', 7.5, 1.1, 0.5, '#27272a', '#52525b');
+      drawAnatomicalMuscle('lHip', 'rHip', 7.5, 1.1, 0.5, segmentBaseColor, segmentHighlightColor, false);
+
+      // ATHLETIC COMPRESSION SHORTS (Bermuda esportiva preta de compressão curta, igual às fotos!)
+      if (projected.lThighMid && projected.rThighMid) {
+        drawAnatomicalMuscle('lHip', 'lThighMid', 6.0, 1.34, 0.45, '#111827', '#27272a', false);
+        drawAnatomicalMuscle('rHip', 'rThighMid', 6.0, 1.34, 0.45, '#111827', '#27272a', false);
+        drawAnatomicalMuscle('lHip', 'rHip', 7.7, 1.12, 0.5, '#111827', '#27272a', false);
+      }
 
       // Upper arms (Bulging Biceps & Triceps peaks)
-      drawAnatomicalMuscle('lShoulder', 'lElbow', 3.8, 1.36, 0.48, segmentBaseColor, segmentHighlightColor, isPush || isPull);
-      drawAnatomicalMuscle('rShoulder', 'rElbow', 3.8, 1.36, 0.48, segmentBaseColor, segmentHighlightColor, isPush || isPull);
+      drawAnatomicalMuscle('lShoulder', 'lElbow', 3.8, 1.36, 0.48, segmentBaseColor, segmentHighlightColor, isBiceps || isTriceps);
+      drawAnatomicalMuscle('rShoulder', 'rElbow', 3.8, 1.36, 0.48, segmentBaseColor, segmentHighlightColor, isBiceps || isTriceps);
       
       // Forearms (Thicker near elbow, tapering towards wrists)
-      drawAnatomicalMuscle('lElbow', 'lHand', 3.2, 1.24, 0.28, '#27272a', '#71717a');
-      drawAnatomicalMuscle('rElbow', 'rHand', 3.2, 1.24, 0.28, '#27272a', '#71717a');
+      drawAnatomicalMuscle('lElbow', 'lHand', 3.2, 1.24, 0.28, segmentBaseColor, segmentHighlightColor, isBiceps || isTriceps);
+      drawAnatomicalMuscle('rElbow', 'rHand', 3.2, 1.24, 0.28, segmentBaseColor, segmentHighlightColor, isBiceps || isTriceps);
 
       // Deltoid caps (Shoulders)
-      drawShoulderCap('lShoulder', isPush || isPull);
-      drawShoulderCap('rShoulder', isPush || isPull);
+      drawShoulderCap('lShoulder', isShoulders);
+      drawShoulderCap('rShoulder', isShoulders);
 
       // Muscular Neck cylinder
-      drawAnatomicalMuscle('neck', 'head', 4.4, 1.15, 0.5, '#27272a', '#52525b');
+      drawAnatomicalMuscle('neck', 'head', 4.4, 1.15, 0.5, segmentBaseColor, segmentHighlightColor, false);
 
       // Draw highlighted biological heatmaps on working muscle target zones (like the red highlights in the screen!)
       muscleFocusAreas.forEach((area) => {
@@ -1720,7 +1805,7 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
           ctx.quadraticCurveTo(pH.x - faceDir * headRad * 0.45, pH.y - headRad * 1.02, pH.x, pH.y - headRad);
           ctx.closePath();
           
-          // Gorgeous high-fidelity volumetric radial metal shading
+           // Gorgeous high-fidelity volumetric radial skin shading
           const headGrad = ctx.createRadialGradient(
             pH.x - faceDir * headRad * 0.4, 
             pH.y - headRad * 0.4, 
@@ -1730,14 +1815,14 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
             headRad * 1.3
           );
           headGrad.addColorStop(0, '#ffeedd'); // Specular highlight
-          headGrad.addColorStop(0.3, '#dca685'); // Warm skin tone
-          headGrad.addColorStop(0.75, '#7c4b35'); // Shaded bone structures
-          headGrad.addColorStop(1, '#33170c'); // Extreme shadow
+          headGrad.addColorStop(0.35, '#dca685'); // Warm healthy skin tone
+          headGrad.addColorStop(0.7, '#7c4b35'); // Shaded facial contours
+          headGrad.addColorStop(1, '#2e150a'); // Deep back neck shadow
           
           ctx.fillStyle = headGrad;
           ctx.fill();
           
-          ctx.strokeStyle = '#5c2d1b';
+          ctx.strokeStyle = '#111827';
           ctx.lineWidth = 1.3;
           ctx.stroke();
           
@@ -1747,9 +1832,9 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
           const earRad = headRad * 0.25;
           ctx.beginPath();
           ctx.ellipse(earX, earY, earRad * 0.7, earRad, Math.PI / 12, 0, Math.PI * 2);
-          ctx.fillStyle = '#7c4b35';
+          ctx.fillStyle = '#9ca3af';
           ctx.fill();
-          ctx.strokeStyle = '#5c2d1b';
+          ctx.strokeStyle = '#111827';
           ctx.stroke();
           
           ctx.restore();
@@ -1926,6 +2011,66 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
     };
   }, [exerciseKey, yaw, pitch, isDragging]);
 
+  const getSafetyGuidelines = () => {
+    switch (exerciseKey) {
+      case 'supino_inclinado':
+        return [
+          'Cotovelos seguros flexionados a ~45º-60º (evita impacto subacromial no ombro)',
+          'Barra descendo em direção à porção superior do peito de forma controlada',
+          'Punhos e cotovelos perfeitamente alinhados sob a carga'
+        ];
+      case 'supino_reto':
+        return [
+          'Cotovelos seguros a 45º em relação ao tronco (evita desgaste do manguito)',
+          'Trajetória da barra vertical controlada ao nível dos mamilos',
+          'Escápulas firmemente aduzidas contra o banco para base estável'
+        ];
+      case 'agachamento':
+        return [
+          'Joelhos estáveis alinhados com a ponta dos pés (evita colapso valgo)',
+          'Quadril empurrado para trás para carga ideal de glúteos/isquiotibiais',
+          'Coluna perfeitamente reta e neutra (evita flexão lombar perigosa)'
+        ];
+      case 'leg_press':
+        return [
+          'Amplitude controlada sem estender totalmente as pernas (evita lockout perigoso)',
+          'Joelhos mantidos paralelos sem desabar para dentro',
+          'Lombar e glúteos colados no banco para evitar retroversão pélvica'
+        ];
+      case 'remada_curvada':
+      case 'remada_unilateral':
+        return [
+          'Coluna neutra rígida e paralela ao solo (previne hérnia discal)',
+          'Puxada direcionada ao quadril inferior para máxima contração dorsal',
+          'Escápulas aduzidas no topo sem rotação interna de ombros'
+        ];
+      case 'desenvolvimento':
+        return [
+          'Coluna apoiada e estável sem hiperextensão lombar nociva',
+          'Amplitude controlada descendo a barra/halteres até a altura do queixo',
+          'Cotovelos levemente projetados para a frente no plano escapular'
+        ];
+      case 'elevacao_lateral':
+        return [
+          'Elevação focada no plano escapular (~20º à frente) para evitar desgaste do ombro',
+          'Mãos abaixo ou no nível exato dos ombros (evita pinçamento do manguito)',
+          'Cotovelos ligeiramente flexionados (~15º), liderando a subida do halter'
+        ];
+      case 'triceps_polia':
+        return [
+          'Cotovelos estáticos e alinhados rente ao tronco (evita puxar com as costas)',
+          'Extensão controlada preservando leve flexão no final (evita lockout articular)',
+          'Peito aberto e coluna ereta com sutil inclinação do tronco para frente'
+        ];
+      default:
+        return [
+          'Coluna vertebral alinhada e abdômen contraído (core ativo)',
+          'Execução sem impulsos ou rebotes bruscos nas articulações',
+          'Movimento controlado e biomecanicamente estável'
+        ];
+    }
+  };
+
   return (
     <div 
       className="relative w-full h-[162px] bg-zinc-950 rounded-2xl border border-zinc-800/80 overflow-hidden group select-none cursor-grab active:cursor-grabbing shadow-inner"
@@ -1942,6 +2087,48 @@ export const ExerciseAnimation: React.FC<ExerciseAnimationProps> = ({ type, name
         ref={canvasRef} 
         className="w-full h-full block"
       />
+
+      {/* Biomechanical Safety Button and HUD Overlay */}
+      <div className="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowSafetyInfo(prev => !prev);
+          }}
+          className={`px-2 py-0.5 rounded-md text-[9px] font-medium flex items-center gap-1 cursor-pointer transition-all border shadow-sm ${
+            showSafetyInfo 
+              ? 'bg-emerald-950/95 border-emerald-500/55 text-emerald-300' 
+              : 'bg-zinc-900/90 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white'
+          }`}
+          title="Verificar Postura Segura"
+        >
+          <ShieldCheck size={11} className={showSafetyInfo ? 'text-emerald-400 animate-pulse' : 'text-zinc-400'} />
+          <span>Postura Segura</span>
+        </button>
+
+        {showSafetyInfo && (
+          <div className="w-[245px] p-2 bg-zinc-950/95 border border-emerald-500/40 rounded-xl shadow-lg shadow-black/60 backdrop-blur-md pointer-events-auto select-text">
+            <div className="flex items-center gap-1.5 border-b border-zinc-800/80 pb-1 mb-1">
+              <ShieldCheck size={11} className="text-emerald-400" />
+              <span className="text-[9px] font-semibold text-emerald-300 uppercase tracking-wider font-sans">
+                Postura e Biomecânica de Segurança
+              </span>
+            </div>
+            <ul className="space-y-1 text-[8px] text-zinc-300 leading-tight">
+              {getSafetyGuidelines().map((guide, idx) => (
+                <li key={idx} className="flex items-start gap-1">
+                  <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                  <span>{guide}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-1 pt-1 border-t border-zinc-900 flex items-center gap-1 text-[7px] text-zinc-500 font-mono italic">
+              <AlertCircle size={8} className="text-emerald-500 shrink-0" />
+              <span>Proteção articular ativa no manequim 3D</span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Control Overlay */}
       <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 opacity-85 group-hover:opacity-100 transition-opacity">

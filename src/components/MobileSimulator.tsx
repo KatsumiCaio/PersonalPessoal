@@ -4,6 +4,7 @@ import { UserProfile, Exercise, DayWorkout, FoodReplacement, GoogleUser } from '
 import { getWorkoutForUser, getAlternativesForExercise } from '../data/workoutData';
 import { foodReplacements } from '../data/nutritionData';
 import { ExerciseAnimation } from './ExerciseAnimation';
+import { ExerciseImage } from './ExerciseImage';
 import { Dumbbell, Utensils, User, Flame, Award, MapPin, Calendar, Compass, RefreshCw, Droplet, Plus, Coffee, AlertTriangle, Play, Pause, RotateCcw, Search, ChevronRight, Check, ChevronLeft, Scale, Clock, Heart, Activity, ChevronDown, Sparkles, Shuffle, Sliders, Send, Bot, Trash2, Sun, Moon } from 'lucide-react';
 import { PALETTE_COLORS } from '../App';
 
@@ -194,6 +195,7 @@ export default function MobileSimulator() {
   const [editName, setEditName] = useState<string>('');
   const [editSeries, setEditSeries] = useState<string>('');
   const [editRest, setEditRest] = useState<number>(60);
+  const [mediaMode, setMediaMode] = useState<'3d' | 'gif'>('gif');
 
   // Subscription, Ads and Freemium sequence states
   const [isPremium, setIsPremium] = useState<boolean>(() => {
@@ -294,6 +296,52 @@ export default function MobileSimulator() {
     return saved ? parseInt(saved, 10) : 0;
   });
 
+  // Weight History states (simulated postgres tables)
+  const [weightHistory, setWeightHistory] = useState<Array<{ id: string; weight: number; date: string }>>(() => {
+    const saved = localStorage.getItem('gymdemocra_weight_history');
+    return saved ? JSON.parse(saved) : [
+      { id: 'w-1', weight: 77.5, date: '12/07/2026' },
+      { id: 'w-2', weight: 76.8, date: '14/07/2026' },
+      { id: 'w-3', weight: 76.0, date: '16/07/2026' }
+    ];
+  });
+  const [newWeightInput, setNewWeightInput] = useState<string>('');
+
+  const handleAddWeightLog = (e: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const numericWeight = parseFloat(newWeightInput);
+    if (isNaN(numericWeight) || numericWeight <= 0 || numericWeight > 300) {
+      setToastMessage("⚠️ Peso inválido. Insira um número correto.");
+      return;
+    }
+
+    const newLog = {
+      id: `weight-${Date.now()}`,
+      weight: numericWeight,
+      date: new Date().toLocaleDateString('pt-BR')
+    };
+
+    const updatedHistory = [newLog, ...weightHistory];
+    setWeightHistory(updatedHistory);
+    localStorage.setItem('gymdemocra_weight_history', JSON.stringify(updatedHistory));
+
+    // Also update profile weight
+    if (profile) {
+      const updatedProfile = { ...profile, weight: numericWeight };
+      setProfile(updatedProfile);
+      localStorage.setItem('gymdemocra_profile', JSON.stringify(updatedProfile));
+    }
+    setNewWeightInput('');
+    setToastMessage(`⚖️ Peso de ${numericWeight} kg registrado!`);
+  };
+
+  const handleDeleteWeightLog = (id: string) => {
+    const updated = weightHistory.filter(w => w.id !== id);
+    setWeightHistory(updated);
+    localStorage.setItem('gymdemocra_weight_history', JSON.stringify(updated));
+    setToastMessage("🗑️ Registro de peso removido.");
+  };
+
   // Food Replacements filtering
   const [selectedReplacementCategory, setSelectedReplacementCategory] = useState<'todas' | 'proteina' | 'carbo' | 'gordura'>('todas');
   const [searchFood, setSearchFood] = useState<string>('');
@@ -344,8 +392,8 @@ export default function MobileSimulator() {
     setIsChatLoading(true);
 
     try {
-      // Keep only the last 6 messages as history to prevent exceeding token limit in the simulator API
-      const historyToSend = chatMessages.slice(-6);
+      // Keep only the last 12 messages as history to prevent exceeding token limit in the simulator API
+      const historyToSend = chatMessages.slice(-12);
 
       const response = await fetch('/api/nutrition/chat', {
         method: 'POST',
@@ -354,7 +402,8 @@ export default function MobileSimulator() {
         },
         body: JSON.stringify({
           message: messageText,
-          history: historyToSend
+          history: historyToSend,
+          userProfile: profile
         })
       });
 
@@ -564,8 +613,26 @@ export default function MobileSimulator() {
     setOnboardingStep(1);
     setSelectedDayIdx(0);
     setCheckedExercises({});
+    setWaterDrunk(0);
+    setWeightHistory([
+      { id: 'w-1', weight: 77.5, date: '12/07/2026' },
+      { id: 'w-2', weight: 76.8, date: '14/07/2026' },
+      { id: 'w-3', weight: 76.0, date: '16/07/2026' }
+    ]);
+    setChatMessages([
+      {
+        id: 'welcome',
+        sender: 'assistant',
+        text: 'Olá! Sou o **NutriAI**, seu nutricionista de bolso especialista em dieta barata. Pode me perguntar sobre a quantidade de calorias de um alimento, sugestões de substituições baratas (como trocar patinho ou frango), ou ideias de refeição para seu objetivo! 🥦🍗',
+        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      }
+    ]);
     localStorage.removeItem('gymdemocra_profile');
     localStorage.removeItem('gymdemocra_water');
+    localStorage.removeItem('gymdemocra_nutrition_chat');
+    localStorage.removeItem('gymdemocra_weight_history');
+    localStorage.removeItem('gymdemocra_daily_meals');
+    localStorage.removeItem('gymdemocra_checked_exercises');
     setConfirmAction(null);
   };
 
@@ -2098,8 +2165,41 @@ export default function MobileSimulator() {
 
                                 {/* Animated GIF / SVG representation */}
                                 {isExpanded && (
-                                  <div className="animate-in slide-in-from-top-1 duration-200">
-                                    <ExerciseAnimation type={ex.animationType} name={ex.name} />
+                                  <div className="animate-in slide-in-from-top-1 duration-200 space-y-2">
+                                    {/* Media Tab Selector */}
+                                    <div className="flex items-center justify-between gap-1 p-0.5 bg-zinc-950/80 rounded-lg border border-zinc-800/80">
+                                      <button
+                                        type="button"
+                                        onClick={() => setMediaMode('gif')}
+                                        className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider font-sans transition-all ${
+                                          mediaMode === 'gif'
+                                            ? 'bg-orange-500 text-zinc-950 shadow-md'
+                                            : 'text-zinc-400 hover:text-zinc-200 bg-transparent'
+                                        }`}
+                                      >
+                                        <Play size={10} className={mediaMode === 'gif' ? 'fill-current' : ''} />
+                                        Movimento Real (GIF)
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setMediaMode('3d')}
+                                        className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-[9px] font-black uppercase tracking-wider font-sans transition-all ${
+                                          mediaMode === '3d'
+                                            ? 'bg-orange-500 text-zinc-950 shadow-md'
+                                            : 'text-zinc-400 hover:text-zinc-200 bg-transparent'
+                                        }`}
+                                      >
+                                        <Activity size={10} />
+                                        Manequim 3D
+                                      </button>
+                                    </div>
+
+                                    {/* Media Render */}
+                                    {mediaMode === 'gif' ? (
+                                      <ExerciseImage exerciseId={ex.id} exerciseName={ex.name} />
+                                    ) : (
+                                      <ExerciseAnimation type={ex.animationType} name={ex.name} />
+                                    )}
                                   </div>
                                 )}
 
@@ -2320,25 +2420,25 @@ export default function MobileSimulator() {
                     <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800/80 gap-1">
                       <button
                         onClick={() => setAlimentacaoSubTab('lista')}
-                        className={`flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all ${
+                        className={`flex-1 py-1.5 px-1 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
                           alimentacaoSubTab === 'lista'
                             ? 'bg-zinc-900 text-white border border-zinc-800 shadow'
-                            : 'text-zinc-400 hover:text-zinc-200'
+                            : 'text-zinc-500 hover:text-zinc-200'
                         }`}
                       >
-                        <Utensils size={11} />
-                        Lista de Alimentos
+                        <Utensils size={10} />
+                        Substitutos
                       </button>
                       <button
                         onClick={() => setAlimentacaoSubTab('chat')}
-                        className={`flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all relative ${
+                        className={`flex-1 py-1.5 px-1 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all relative ${
                           alimentacaoSubTab === 'chat'
                             ? 'bg-accent text-white font-black'
-                            : 'text-zinc-400 hover:text-accent'
+                            : 'text-zinc-500 hover:text-accent'
                         }`}
                       >
-                        <Sparkles size={11} className={alimentacaoSubTab === 'chat' ? 'animate-pulse text-yellow-300' : 'text-zinc-500'} />
-                        Perguntar ao NutriAI
+                        <Sparkles size={10} className={alimentacaoSubTab === 'chat' ? 'animate-pulse text-yellow-300' : 'text-zinc-500'} />
+                        NutriAI Chat
                         {alimentacaoSubTab !== 'chat' && (
                           <span className="absolute top-1 right-1.5 flex h-1.5 w-1.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
@@ -2348,7 +2448,7 @@ export default function MobileSimulator() {
                       </button>
                     </div>
 
-                    {alimentacaoSubTab === 'lista' ? (
+                    {alimentacaoSubTab === 'lista' && (
                       /* Food Replacement Hub */
                       <div className="space-y-2 flex-1 flex flex-col min-h-0">
                         <div className="flex items-center justify-between">
@@ -2435,7 +2535,9 @@ export default function MobileSimulator() {
                           )}
                         </div>
                       </div>
-                    ) : (
+                    )}
+
+                    {alimentacaoSubTab === 'chat' && (
                       /* NutriAI Chat View */
                       <div className="flex-1 flex flex-col min-h-0 bg-zinc-950/60 rounded-2xl border border-zinc-850/60 overflow-hidden relative">
                         {/* Chat Header */}
@@ -2779,6 +2881,67 @@ export default function MobileSimulator() {
                               );
                             })}
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Histórico de Peso (PostgreSQL historico_peso) */}
+                      <div className={`${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-200/80 shadow-2xs'} border rounded-2xl p-3 space-y-2.5 transition-colors`}>
+                        <div className="flex justify-between items-center">
+                          <span className={`font-bold ${isDark ? 'text-zinc-400' : 'text-zinc-650'} text-xs font-sans flex items-center gap-1.5`}>
+                            <Scale size={13} className="text-accent" />
+                            Histórico de Peso
+                          </span>
+                          <span className="text-[8px] bg-accent/10 text-accent font-mono border border-accent/15 px-1.5 py-0.5 rounded uppercase font-bold">
+                            SQL SIMULADO
+                          </span>
+                        </div>
+
+                        {/* Form para adicionar novo registro de peso */}
+                        <form onSubmit={handleAddWeightLog} className="flex gap-1.5">
+                          <div className="relative flex-1">
+                            <input
+                              type="number"
+                              step="0.1"
+                              placeholder="Registrar peso (kg)"
+                              value={newWeightInput}
+                              onChange={(e) => setNewWeightInput(e.target.value)}
+                              className={`w-full ${isDark ? 'bg-zinc-900 border-zinc-800 text-zinc-100' : 'bg-zinc-50 border-zinc-200 text-zinc-800'} text-[10.5px] rounded-lg px-2.5 py-1.5 font-sans focus:outline-none focus:border-accent`}
+                            />
+                            <span className="absolute right-2 top-2 text-[9px] text-zinc-500 font-bold">kg</span>
+                          </div>
+                          <button
+                            type="submit"
+                            className="bg-accent hover:bg-accent-hover text-white px-3 py-1.5 rounded-lg text-[10px] font-bold font-sans transition-all active:scale-95 cursor-pointer"
+                          >
+                            Adicionar
+                          </button>
+                        </form>
+
+                        {/* Lista de logs de peso */}
+                        <div className="space-y-1 max-h-[85px] overflow-y-auto scrollbar-none">
+                          {weightHistory.map((log) => (
+                            <div
+                              key={log.id}
+                              className={`flex justify-between items-center text-[10px] py-1 px-1.5 rounded ${
+                                isDark ? 'hover:bg-zinc-900/50 text-zinc-300' : 'hover:bg-zinc-50 text-zinc-700'
+                              }`}
+                            >
+                              <span className="font-mono text-zinc-500">{log.date}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-black font-mono text-accent">{log.weight} kg</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteWeightLog(log.id)}
+                                  className="text-zinc-600 hover:text-red-500 transition-colors p-0.5"
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          {weightHistory.length === 0 && (
+                            <p className="text-center py-2 text-[9px] text-zinc-600 font-sans">Nenhum peso registrado.</p>
+                          )}
                         </div>
                       </div>
                     </div>

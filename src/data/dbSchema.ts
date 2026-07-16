@@ -59,6 +59,24 @@ CREATE TABLE public.treino_exercicios (
     UNIQUE(ficha_treino_id, ordem) -- Evita conflitos de ordem na ficha
 );
 
+-- 5.1 TABELA DE HISTÓRICO DE PESO (Acompanhamento antropométrico)
+CREATE TABLE public.historico_peso (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    usuario_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
+    peso_kg DECIMAL(5,2) NOT NULL CHECK (peso_kg > 0),
+    data_registro DATE DEFAULT CURRENT_DATE NOT NULL,
+    criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- 5.2 TABELA DE REGISTRO DE ÁGUA (Controle diário de hidratação)
+CREATE TABLE public.registro_agua (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    usuario_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
+    quantidade_ml INT NOT NULL CHECK (quantidade_ml > 0),
+    data_registro DATE DEFAULT CURRENT_DATE NOT NULL,
+    criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
 -- ====================================================================
 -- 6. POLÍTICAS DE SEGURANÇA DE LINHA (ROW LEVEL SECURITY - RLS)
 -- ====================================================================
@@ -68,6 +86,8 @@ ALTER TABLE public.usuarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.exercicios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fichas_treino ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.treino_exercicios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.historico_peso ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.registro_agua ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para 'usuarios'
 CREATE POLICY "Usuários podem visualizar seu próprio perfil" 
@@ -137,6 +157,26 @@ CREATE POLICY "Usuários deletam exercícios de suas fichas"
         )
     );
 
+-- Políticas para 'historico_peso' (Controle antropométrico)
+CREATE POLICY "Usuários veem seu próprio histórico de peso" 
+    ON public.historico_peso FOR SELECT USING (usuario_id = auth.uid());
+
+CREATE POLICY "Usuários inserem seu próprio peso" 
+    ON public.historico_peso FOR INSERT WITH CHECK (usuario_id = auth.uid());
+
+CREATE POLICY "Usuários deletam seu próprio peso" 
+    ON public.historico_peso FOR DELETE USING (usuario_id = auth.uid());
+
+-- Políticas para 'registro_agua' (Controle hídrico)
+CREATE POLICY "Usuários veem seu próprio registro de água" 
+    ON public.registro_agua FOR SELECT USING (usuario_id = auth.uid());
+
+CREATE POLICY "Usuários inserem seu próprio registro de água" 
+    ON public.registro_agua FOR INSERT WITH CHECK (usuario_id = auth.uid());
+
+CREATE POLICY "Usuários deletam seu próprio registro de água" 
+    ON public.registro_agua FOR DELETE USING (usuario_id = auth.uid());
+
 -- ====================================================================
 -- 7. ÍNDICES DE PERFORMANCE PARA CONSULTAS RÁPIDAS (OTIMIZAÇÃO DO APP)
 -- ====================================================================
@@ -144,6 +184,8 @@ CREATE INDEX idx_usuarios_objetivo ON public.usuarios(objetivo);
 CREATE INDEX idx_fichas_treino_usuario ON public.fichas_treino(usuario_id);
 CREATE INDEX idx_treino_exercicios_ficha ON public.treino_exercicios(ficha_treino_id);
 CREATE INDEX idx_exercicios_grupo ON public.exercicios(grupo_muscular);
+CREATE INDEX idx_historico_peso_usuario ON public.historico_peso(usuario_id);
+CREATE INDEX idx_registro_agua_usuario ON public.registro_agua(usuario_id);
 
 -- ====================================================================
 -- 8. TRIGGER DE CRIAÇÃO AUTOMÁTICA DE PERFIL (AUTH -> PUBLIC)
