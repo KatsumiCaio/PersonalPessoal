@@ -128,6 +128,15 @@ export const ExerciseImage: React.FC<ExerciseImageProps> = ({
     setCurrentFrame(0);
   }, [imageUrls]);
 
+  // Preload all frames in background to ensure zero-flicker instant flipbook transitions
+  useEffect(() => {
+    if (imageUrls.length <= 1) return;
+    imageUrls.forEach((url) => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, [imageUrls]);
+
   if (imageUrls.length === 0) {
     return (
       <div id="exercise-image-placeholder" className="relative flex flex-col items-center justify-center h-48 bg-zinc-950 rounded-xl border border-zinc-800/80 p-4 text-center overflow-hidden">

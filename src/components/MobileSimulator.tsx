@@ -187,7 +187,22 @@ export default function MobileSimulator() {
   // Active App States
   const [activeTab, setActiveTab] = useState<'treino' | 'alimentacao' | 'perfil'>('treino');
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
-  const [checkedExercises, setCheckedExercises] = useState<Record<string, boolean>>({});
+  const [checkedExercises, setCheckedExercises] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem('gymdemocra_checked_exercises');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return {};
+      }
+    }
+    return {};
+  });
+
+  // Sync checked exercises to localStorage
+  useEffect(() => {
+    localStorage.setItem('gymdemocra_checked_exercises', JSON.stringify(checkedExercises));
+  }, [checkedExercises]);
   const [expandedExerciseId, setExpandedExerciseId] = useState<string | null>(null);
   const [userWorkouts, setUserWorkouts] = useState<DayWorkout[]>([]);
   const [substitutingExerciseId, setSubstitutingExerciseId] = useState<string | null>(null);
@@ -510,6 +525,10 @@ export default function MobileSimulator() {
   // Audio Context for buzzer (using Web Audio API to prevent heavy external files)
   const playBeep = () => {
     try {
+      // Trigger a soft double vibration pattern to signal end of rest
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+      }
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
@@ -1210,6 +1229,55 @@ export default function MobileSimulator() {
                     {/* STEP 1: FREQUENCY & DURATION */}
                     {onboardingStep === 1 && (
                       <div className="space-y-3.5 animate-in fade-in duration-200">
+                        {/* Quick Setup Shortcut */}
+                        <div className="bg-zinc-900/40 p-2.5 rounded-xl border border-dashed border-orange-500/30 flex items-center justify-between gap-2">
+                          <div className="space-y-0.5">
+                            <span className="text-[9px] font-bold text-orange-400 block uppercase">Está com pressa? ⚡</span>
+                            <span className="text-[8.5px] text-zinc-400 block leading-tight">Gere uma ficha equilibrada de 4 dias focada em Hipertrofia com apenas 1 clique.</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDays(4);
+                              setObjective('ganhar_massa');
+                              setLocation('academia_media');
+                              setWeight(75);
+                              setHeight(170);
+                              setDesiredWeight(73);
+                              setExperienceLevel('intermediario');
+                              setWorkoutDurationCategory('moderado');
+                              setAllowedMachines(['leg_press', 'polias', 'pesos_livres', 'maquinas']);
+                              setHealthLimitations(['nenhuma']);
+                              setGender('masculino');
+                              
+                              const newProfile: UserProfile = {
+                                objective: 'ganhar_massa',
+                                location: 'academia_media',
+                                daysPerWeek: 4,
+                                weight: 75,
+                                height: 170,
+                                desiredWeight: 73,
+                                experienceLevel: 'intermediario',
+                                workoutDurationCategory: 'moderado',
+                                allowedMachines: ['leg_press', 'polias', 'pesos_livres', 'maquinas'],
+                                healthLimitations: ['nenhuma'],
+                                waterDrunk: 0,
+                                gender: 'masculino'
+                              };
+                              setProfile(newProfile);
+                              localStorage.setItem('gymdemocra_profile', JSON.stringify(newProfile));
+                              setWaterDrunk(0);
+                              localStorage.setItem('gymdemocra_water', '0');
+                              setActiveTab('treino');
+                              setSelectedDayIdx(0);
+                              setCheckedExercises({});
+                            }}
+                            className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-[9px] py-2 px-2.5 rounded-lg shrink-0 transition-colors cursor-pointer"
+                          >
+                            Atalho Rápido
+                          </button>
+                        </div>
+
                         <div>
                           <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
                             1. Quantas vezes pretende treinar por semana?
